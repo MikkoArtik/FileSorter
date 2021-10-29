@@ -1,9 +1,26 @@
 import argparse
+import sys
+import logging
 
 from config import create_config_file, ConfigFile
 from sorters.seismic_sorter import Sorter
 
-if __name__ == '__main__':
+
+def check_python_version(func):
+    def wrapper(*args, **kwargs):
+        python_info = sys.version_info
+        if python_info.major < 3:
+            logging.error('Need python version 3')
+            return
+        if python_info.minor < 8:
+            logging.error('Need python version >=3.8')
+            return
+        func(*args, **kwargs)
+    return wrapper
+
+
+@check_python_version
+def main():
     parser = argparse.ArgumentParser(
         description='Утилита для создания структуры папок и сортировка '
                     'файлов записей гравиметров и сейсмометров для '
@@ -24,8 +41,13 @@ if __name__ == '__main__':
         create_config_file(args.config)
     else:
         if not args.config:
-            raise Exception('Не указан файл конфигурации')
+            logging.error('Не указан файл конфигурации')
+            return
         if args.sort_seis:
             conf = ConfigFile(args.config)
             sorter = Sorter(conf)
             sorter.run()
+
+
+if __name__ == '__main__':
+    main()
