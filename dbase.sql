@@ -9,6 +9,7 @@ CREATE TABLE links(
     chain_id INTEGER NOT NULL,
     link_id INTEGER NOT NULL,
     filename VARCHAR(100) UNIQUE NOT NULL,
+    is_exist int DEFAULT 0,
     FOREIGN KEY (chain_id) REFERENCES chains(id)
 );
 
@@ -31,11 +32,13 @@ CREATE TABLE dat_files(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     gravimeter_id INTEGER NOT NULL,
     station_id INTEGER NOT NULL,
+    link_id INTEGER NOT NULL,
     datetime_start DATETIME NOT NULL,
     datetime_stop DATETIME NOT NULL,
     path TEXT UNIQUE NOT NULL,
     FOREIGN KEY(gravimeter_id) REFERENCES gravimeters(id),
-    FOREIGN KEY(station_id) REFERENCES stations(id)
+    FOREIGN KEY(station_id) REFERENCES stations(id),
+    FOREIGN KEY(link_id) REFERENCES links(id)
 );
 
 CREATE TABLE tsf_files(
