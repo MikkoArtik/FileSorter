@@ -1,14 +1,23 @@
-from typing import List, Tuple, Union
+from typing import Tuple, Dict
 from datetime import datetime
 from datetime import timedelta
 import os
 
 
+CHAIN_EXTENSION = 'txt'
 TSF_EXTENSION = 'tsf'
 DAT_EXTENSION = 'dat'
 
 DAT_FIRST_LINE_INDEX = 21
 TSF_FIRST_LINE_INDEX = 42
+
+DAT_HEADER_FIRST_LINE = '/		CG-6 Survey'
+
+
+def is_dat_file(path: str):
+    with open(path) as file_ctx:
+        first_line = file_ctx.readline().rstrip()
+        return first_line == DAT_HEADER_FIRST_LINE
 
 
 class TSFile:
@@ -88,3 +97,26 @@ class DATFile:
         with open(self.path) as f:
             need_line = f.readlines()[2].rstrip()
         return need_line.split('\t')[-1]
+
+
+class ChainFile:
+    def __init__(self, path):
+        if not os.path.exists(path):
+            raise OSError
+
+        extension = os.path.basename(path).split('.')[-1]
+        if extension != CHAIN_EXTENSION:
+            raise OSError(f'File is not {CHAIN_EXTENSION} file')
+
+        if is_dat_file(path):
+            raise RuntimeError('File is not chain file')
+
+        self.path = path
+        self.chain = self.__load_chain()
+
+    def __load_chain(self) -> Dict[str, int]:
+        chain = dict()
+        with open(self.path) as file_ctx:
+            for i, line in enumerate(file_ctx):
+                chain[line.rstrip()] = i
+        return chain
