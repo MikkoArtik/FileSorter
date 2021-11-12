@@ -1,14 +1,14 @@
 CREATE TABLE chains(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     dev_num_part VARCHAR(10) NOT NULL,
-    path TEXT NOT NULL
+    path TEXT UNIQUE NOT NULL
 );
 
-CREATE TABLE chains_order(
+CREATE TABLE links(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     chain_id INTEGER NOT NULL,
     seq_id INTEGER NOT NULL,
-    filename VARCHAR(100) NOT NULL,
+    filename VARCHAR(100) UNIQUE NOT NULL,
     FOREIGN KEY (chain_id) REFERENCES chains(id)
 );
 
