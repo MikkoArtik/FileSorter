@@ -112,13 +112,14 @@ class ChainFile:
             raise RuntimeError('File is not chain file')
 
         self.path = path
-        self.chain = self.__load_chain()
+        self.links = self.__load_links()
 
-    def __load_chain(self) -> Dict[str, int]:
+    def __load_links(self) -> Dict[str, int]:
         chain = dict()
         with open(self.path) as file_ctx:
             for i, line in enumerate(file_ctx):
-                chain[line.rstrip()] = i
+                if line:
+                    chain[line.rstrip()] = i
         return chain
 
     @property
