@@ -118,6 +118,7 @@ class ChainFile:
         chain = dict()
         with open(self.path) as file_ctx:
             for i, line in enumerate(file_ctx):
+                line = line.rstrip()
                 if line:
                     chain[line.rstrip()] = i
         return chain

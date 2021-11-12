@@ -2,7 +2,7 @@ import os
 
 from seiscore import BinaryFile
 
-from sorters.gravic_sorter import DATFile, TSFile
+from sorters.gravic_sorter import DATFile, TSFile, ChainFile
 from dbase import SqliteDbase
 from config import ConfigFile
 
@@ -16,6 +16,20 @@ class Loader:
         self.dbase = SqliteDbase(self.config_file.export_root)
         self.gravimetric_root = self.config_file.gravimetric_root
         self.seismic_root = self.config_file.seismic_root
+
+    def load_chain_files(self):
+        for root, _, files in os.walk(self.gravimetric_root):
+            for filename in files:
+                path = os.path.join(root, filename)
+                try:
+                    chain_file = ChainFile(path)
+                except (OSError, RuntimeError):
+                    continue
+
+                chain_id = self.dbase.add_chain(chain_file.sensor_part_name,
+                                                path)
+                for link_file, link_id in chain_file.links.items():
+                    self.dbase.add_link(chain_id, link_id, link_file)
 
     def load_dat_files(self):
         for root, _, files in os.walk(self.gravimetric_root):
@@ -60,6 +74,7 @@ class Loader:
                                          path)
 
     def run(self):
-        self.load_dat_files()
-        self.load_tsf_files()
-        self.load_seismic_files()
+        self.load_chain_files()
+        # self.load_dat_files()
+        # self.load_tsf_files()
+        # self.load_seismic_files()
