@@ -7,7 +7,7 @@ CREATE TABLE chains(
 CREATE TABLE links(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     chain_id INTEGER NOT NULL,
-    seq_id INTEGER NOT NULL,
+    link_id INTEGER NOT NULL,
     filename VARCHAR(100) UNIQUE NOT NULL,
     FOREIGN KEY (chain_id) REFERENCES chains(id)
 );
