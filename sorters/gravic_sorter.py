@@ -114,13 +114,18 @@ class ChainFile:
         self.path = path
         self.links = self.__load_links()
 
+    def get_link_id_from_filename(self, filename: str) -> int:
+        link_id = filename.split('.')[0].split('_')[-1]
+        return int(link_id)
+
     def __load_links(self) -> Dict[str, int]:
         chain = dict()
         with open(self.path) as file_ctx:
-            for i, line in enumerate(file_ctx):
-                line = line.rstrip()
-                if line:
-                    chain[line.rstrip()] = i
+            for line in file_ctx:
+                filename = line.rstrip()
+                if filename:
+                    link_id = self.get_link_id_from_filename(filename)
+                    chain[filename.rstrip()] = link_id
         return chain
 
     @property
