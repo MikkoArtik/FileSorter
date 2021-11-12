@@ -120,3 +120,7 @@ class ChainFile:
             for i, line in enumerate(file_ctx):
                 chain[line.rstrip()] = i
         return chain
+
+    @property
+    def sensor_part_name(self) -> str:
+        return os.path.basename(self.path).split('.')[0].split('_')[1]

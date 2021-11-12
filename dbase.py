@@ -33,6 +33,34 @@ class SqliteDbase:
         cursor.close()
         return connection
 
+    def add_chain(self, sensor_part_name: str, path: str) -> int:
+        query = 'INSERT INTO chains(dev_num_part, path) ' \
+                f'VALUES (\'{sensor_part_name}\', \'{path}\')'
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute(query)
+            self.connection.commit()
+        except sqlite3.IntegrityError:
+            pass
+
+        query = f'SELECT id FROM chains WHERE path=\'{path}\''
+        id_val = cursor.execute(query).fetchone()[0]
+        return id_val
+
+    def add_link(self, chain_id: int, order: int, filename: str) -> int:
+        query = 'INSERT INTO links(chain_id, link_id, filename) VALUES ' \
+                f'({chain_id}, {order}, \'{filename}\');'
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute(query)
+            self.connection.commit()
+        except sqlite3.IntegrityError:
+            pass
+
+        query = f'SELECT id FROM links WHERE filename=\'{filename}\''
+        id_val = cursor.execute(query).fetchone()[0]
+        return id_val
+
     def add_gravimeter(self, number: str) -> int:
         query = f'INSERT INTO gravimeters(number) VALUES(\'{number}\');'
         cursor = self.connection.cursor()
