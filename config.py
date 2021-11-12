@@ -27,11 +27,8 @@ STRUCTURE = {
             'extensions': ['bin', 'xx', '00'],
             'delimiter': '_',
             'markers': {
-                'order': 0,
                 'point': 1,
                 'sensor': 2,
-                'date': 3,
-                'time': 4
             }
         }
     },
@@ -43,9 +40,7 @@ STRUCTURE = {
 
 class SeismicFileAttr(NamedTuple):
     name: str
-    order: int
     point: str
-    datetime: datetime
     sensor: str
 
 
@@ -92,20 +87,11 @@ class ConfigFile:
         delimiter = self.data['seismic']['filename']['delimiter']
 
         markers = self.data['seismic']['filename']['markers']
-        order_index, point_index = markers['order'], markers['point']
-        date_index, time_index = markers['date'], markers['time']
+        point_index = markers['point']
         sensor_index = markers['sensor']
 
         split_name = filename.split('.')[0].split(delimiter)
-        order = int(split_name[order_index])
         point = split_name[point_index]
 
-        date_split = split_name[date_index].split('-')
-        year, month, day = map(int, date_split)
-
-        time_split = split_name[time_index].split('-')
-        hour, minute, second = map(int, time_split)
-        datetime_val = datetime(year, month, day, hour, minute, second)
         sensor = split_name[sensor_index]
-
-        return SeismicFileAttr(filename, order, point, datetime_val, sensor)
+        return SeismicFileAttr(filename, point, sensor)
