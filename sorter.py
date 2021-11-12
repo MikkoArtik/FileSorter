@@ -6,20 +6,6 @@ from config import create_config_file, ConfigFile
 from sorters.seismic_sorter import Sorter
 
 
-def check_python_version(func):
-    def wrapper(*args, **kwargs):
-        python_info = sys.version_info
-        if python_info.major < 3:
-            logging.error('Need python version 3')
-            return
-        if python_info.minor < 8:
-            logging.error('Need python version >=3.8')
-            return
-        func(*args, **kwargs)
-    return wrapper
-
-
-@check_python_version
 def main():
     parser = argparse.ArgumentParser(
         description='Утилита для создания структуры папок и сортировка '
