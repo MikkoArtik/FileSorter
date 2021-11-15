@@ -82,7 +82,7 @@ class DATFile:
     @property
     def datetime_start(self) -> datetime:
         line_datetime = self.__get_datetime_from_line(self.__first_line)
-        return line_datetime + timedelta(minutes=-1, seconds=1)
+        return line_datetime + timedelta(minutes=-1)
 
     @property
     def datetime_stop(self) -> datetime:
