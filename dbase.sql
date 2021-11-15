@@ -58,6 +58,27 @@ CREATE TABLE seis_files(
     FOREIGN KEY(sensor_id) REFERENCES seismometers(id),
     FOREIGN KEY(station_id) REFERENCES stations(id));
 
+CREATE TABLE time_intersection(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grav_dat_id INTEGER NOT NULL,
+    seis_id INTEGER NOT NULL,
+    datetime_start DATETIME NOT NULL,
+    datetime_stop DATETIME NOT NULL,
+    FOREIGN KEY(grav_dat_id) REFERENCES dat_files(id),
+    FOREIGN KEY(seis_id) REFERENCES seis_files(id)
+);
+
+
+CREATE VIEW grav_seis_times
+AS
+SELECT g.id as grav_id, s.id as seis_id, g.datetime_start as grav_dt_start,
+g.datetime_stop as grav_dt_stop, s.datetime_start as seis_datetime_start,
+s.datetime_stop as seis_datetime_stop
+ FROM
+dat_files as g JOIN seis_files as s ON g.station_id = s.station_id AND
+MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s
+.datetime_stop);
+
 
 CREATE VIEW grav_file_pairs
 AS
