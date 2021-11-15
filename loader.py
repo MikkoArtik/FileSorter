@@ -140,3 +140,4 @@ class Loader:
         self.load_dat_files()
         self.load_tsf_files()
         self.load_seismic_files()
+        self.set_intersection_times()
