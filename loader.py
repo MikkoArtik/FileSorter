@@ -1,6 +1,9 @@
 import os
 import logging
 
+from datetime import datetime
+from datetime import timedelta
+
 from seiscore import BinaryFile
 from seiscore.binaryfile.binaryfile import BadHeaderData
 
@@ -8,6 +11,23 @@ from sorters.gravic_sorter import DATFile, TSFile, ChainFile
 from dbase import SqliteDbase
 from config import ConfigFile
 
+
+def get_intersection_time(grav_time: datetime, seis_time: datetime,
+                          edge_type: str) -> datetime:
+    if seis_time == grav_time:
+        return seis_time
+
+    result = seis_time + timedelta(seconds=grav_time.second - seis_time.second)
+    if edge_type == 'left':
+        if seis_time < grav_time:
+            return grav_time
+        result += timedelta(minutes=1)
+    else:
+        if seis_time > grav_time:
+            return grav_time
+        result += timedelta(minutes=-1)
+    result += timedelta(milliseconds=-result.microsecond / 1000)
+    return result
 
 
 class Loader:
@@ -99,6 +119,21 @@ class Loader:
                                          path)
                 self.logger.debug(f'Seismic file {path} added')
         self.logger.debug('Loading seismic files finished')
+
+    def set_intersection_times(self):
+        self.dbase.clear_time_intersections()
+        grav_seis_pairs = self.dbase.get_grav_seis_times()
+        for grav_id, seis_id, *times in grav_seis_pairs:
+            grav_dt_start, grav_dt_stop = times[:2]
+            seis_dt_start, seis_dt_stop = times[2:]
+
+            left_limit = get_intersection_time(grav_dt_start, seis_dt_start,
+                                               'left')
+            right_limit = get_intersection_time(grav_dt_stop, seis_dt_stop,
+                                                'right')
+            if left_limit < right_limit:
+                self.dbase.add_time_intersection(grav_id, seis_id,
+                                                 left_limit, right_limit)
 
     def run(self):
         self.load_chain_files()
