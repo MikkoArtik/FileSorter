@@ -199,3 +199,43 @@ class SqliteDbase:
                               f'successful')
         except sqlite3.IntegrityError:
             self.logger.error(f'seismic file with path {path} not add')
+
+    def get_grav_seis_times(self):
+        query = 'SELECT * FROM grav_seis_times;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        src_data = [list(x) for x in cursor.fetchall()]
+
+        records = []
+        for rec in src_data:
+            record = rec[:2]
+            for i in range(4):
+                try:
+                    dt = datetime.strptime(rec[2 + i], '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    try:
+                        dt = datetime.strptime(rec[2 + i],
+                                               '%Y-%m-%d %H:%M:%S.%f')
+                    except ValueError:
+                        break
+                record.append(dt)
+            records.append(record)
+        return records
+
+    def clear_time_intersections(self):
+        query = 'DELETE FROM time_intersection;'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
+
+    def add_time_intersection(self, grav_dat_id: int, seis_id,
+                              datetime_left: datetime,
+                              datetime_right: datetime):
+        query = 'INSERT INTO time_intersection(grav_dat_id, seis_id, ' \
+                f'datetime_start, datetime_stop) VALUES ({grav_dat_id}, ' \
+                f'{seis_id}, \'{datetime_left}\', \'{datetime_right}\');'
+        try:
+            self.connection.cursor().execute(query)
+            self.connection.commit()
+            self.logger.debug(f'Time intersection added successful')
+        except sqlite3.IntegrityError:
+            self.logger.error(f'Fail adding time intersection')
