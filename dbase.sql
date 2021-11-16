@@ -76,7 +76,7 @@ CREATE TABLE seis_energy(
     Ey REAL NOT NULL DEFAULT 0,
     Ez REAL NOT NULL DEFAULT 0,
     Efull REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (time_intersection_id) REFERENCES seis_files(id)
+    FOREIGN KEY (time_intersection_id) REFERENCES seis_files(id) ON DELETE CASCADE
 );
 
 
@@ -90,11 +90,13 @@ dat_files as g JOIN seis_files as s ON g.station_id = s.station_id AND
 MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s
 .datetime_stop);
 
+
 CREATE VIEW minimal_energy
 AS
 SELECT time_intersection_id, minute_id, Ez FROM seis_energy
 GROUP BY time_intersection_id
 HAVING Efull = MIN(EFull);
+
 
 CREATE VIEW energy_ratio
 AS
