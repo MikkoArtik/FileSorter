@@ -268,12 +268,13 @@ class SqliteDbase:
 
     def add_energies(self, pair_id: int, energies: List[List[float]]):
         query_template = 'INSERT INTO seis_energy(time_intersection_id,' \
-                             ' minute_id, Ex, Ey, Ez) VALUES ' \
-                             '({id_val}, {minute_id}, {e_x}, {e_y}, {e_z});'
-        for index, energy_xyz in enumerate(energies):
+                             ' minute_id, Ex, Ey, Ez, Efull) VALUES ' \
+                             '({id_val}, {minute_id}, ' \
+                             '{e_x}, {e_y}, {e_z}, {e_f});'
+        for index, energy_xyzf in enumerate(energies):
             query = query_template.format(
-                id_val=pair_id, minute_id=index, e_x=energy_xyz[0],
-                e_y=energy_xyz[1], e_z=energy_xyz[2])
+                id_val=pair_id, minute_id=index, e_x=energy_xyzf[0],
+                e_y=energy_xyzf[1], e_z=energy_xyzf[2], e_f=energy_xyzf[3])
             self.connection.cursor().execute(query)
             self.connection.commit()
 
