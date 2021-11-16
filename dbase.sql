@@ -68,6 +68,16 @@ CREATE TABLE time_intersection(
     FOREIGN KEY(seis_id) REFERENCES seis_files(id)
 );
 
+CREATE TABLE seis_energy(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    time_intersection_id INTEGER NOT NULL,
+    minute_id INTEGER NOT NULL,
+    Ex REAL NOT NULL DEFAULT 0,
+    Ey REAL NOT NULL DEFAULT 0,
+    Ez REAL NOT NULL DEFAULT 0,
+    FOREIGN KEY (time_intersection_id) REFERENCES seis_files(id)
+);
+
 
 CREATE VIEW grav_seis_times
 AS
@@ -78,21 +88,3 @@ s.datetime_stop as seis_datetime_stop
 dat_files as g JOIN seis_files as s ON g.station_id = s.station_id AND
 MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s
 .datetime_stop);
-
-
-CREATE VIEW grav_file_pairs
-AS
-SELECT s.name, g.number AS grav_sensor, d.datetime_start, d.datetime_stop, d.path AS dat_path, t.path AS tsf_path
-FROM dat_files AS d
-JOIN stations AS s ON d.station_id=s.id
-JOIN gravimeters AS g ON d.gravimeter_id=g.id
-JOIN tsf_files AS t ON d.datetime_stop=t.datetime_stop AND substr(g.number, -4)=t.dev_num_part;
-
-
-CREATE VIEW grav_seis_pairs
-AS
-SELECT g.name AS point, g.grav_sensor, ss.number AS seis_sensor, g.datetime_start, g.datetime_stop, g.dat_path, g.tsf_path, s.path AS seis_path
-FROM grav_file_pairs AS g
-JOIN seis_files AS s ON
-s.station_id=(SELECT id FROM stations WHERE name=g.name) AND MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
-JOIN seismometers AS ss ON s.sensor_id=ss.id;
