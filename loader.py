@@ -17,17 +17,19 @@ def get_intersection_time(grav_time: datetime, seis_time: datetime,
     if seis_time == grav_time:
         return seis_time
 
-    result = seis_time + timedelta(seconds=grav_time.second - seis_time.second)
+    variant_datetime = datetime(seis_time.year, seis_time.month,
+                                seis_time.day, seis_time.hour,
+                                seis_time.minute, grav_time.second)
     if edge_type == 'left':
-        if seis_time < grav_time:
-            return grav_time
-        result += timedelta(minutes=1)
+        if variant_datetime > seis_time:
+            return variant_datetime
+        else:
+            return variant_datetime + timedelta(minutes=1)
     else:
-        if seis_time > grav_time:
-            return grav_time
-        result += timedelta(minutes=-1)
-    result += timedelta(milliseconds=-result.microsecond / 1000)
-    return result
+        if variant_datetime < seis_time:
+            return variant_datetime
+        else:
+            return variant_datetime + timedelta(minutes=-1)
 
 
 class Loader:
