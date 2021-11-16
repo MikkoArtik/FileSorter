@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Tuple, List, Dict, NamedTuple
 from datetime import datetime
 from datetime import timedelta
 import os
@@ -12,6 +12,11 @@ DAT_FIRST_LINE_INDEX = 21
 TSF_FIRST_LINE_INDEX = 42
 
 DAT_HEADER_FIRST_LINE = '/		CG-6 Survey'
+
+
+class Measure(NamedTuple):
+    datetime_val: datetime
+    corr_grav_value: float
 
 
 def is_dat_file(path: str):
@@ -97,6 +102,25 @@ class DATFile:
         with open(self.path) as f:
             need_line = f.readlines()[2].rstrip()
         return need_line.split('\t')[-1]
+
+    def extract_all_measures(self) -> List[Measure]:
+        measures = []
+        with open(self.path) as file_ctx:
+            for _ in range(DAT_FIRST_LINE_INDEX):
+                next(file_ctx)
+
+            for line in file_ctx:
+                split_line = line.rstrip().split('\t')
+                if not split_line:
+                    continue
+
+                datetime_line = split_line[1] + ' ' + split_line[2]
+                datetime_val = datetime.strptime(datetime_line,
+                                                 '%Y-%m-%d %H:%M:%S')
+                corr_grav_val = float(split_line[3])
+                single_measure = Measure(datetime_val, corr_grav_val)
+                measures.append(single_measure)
+        return measures
 
 
 class ChainFile:
