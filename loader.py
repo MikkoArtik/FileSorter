@@ -7,7 +7,7 @@ from datetime import timedelta
 from seiscore import BinaryFile
 from seiscore.binaryfile.binaryfile import BadHeaderData
 
-from sorters.gravic_sorter import DATFile, TSFile, ChainFile
+from gravic_files import DATFile, TSFile, ChainFile
 from dbase import SqliteDbase
 from config import ConfigFile
 
