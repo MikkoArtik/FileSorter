@@ -188,10 +188,14 @@ class SqliteDbase:
         sensor_id = self.add_seismometer(sensor)
         station_id = self.add_station(station)
 
+        datetime_start_str = datetime_start.strftime('%Y-%m-%d %M:%H:%S')
+        datetime_stop_str = datetime_stop.strftime('%Y-%m-%d %M:%H:%S')
+
         query = 'INSERT INTO seis_files(sensor_id, station_id, ' \
                 'datetime_start, datetime_stop, path) ' \
                 f'VALUES ({sensor_id}, {station_id}, ' \
-                f'\'{datetime_start}\', \'{datetime_stop}\', \'{path}\');'
+                f'\'{datetime_start_str}\', \'{datetime_stop_str}\', ' \
+                f'\'{path}\');'
         try:
             self.connection.cursor().execute(query)
             self.connection.commit()
