@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
-from typing import Union
+from typing import Union, List, Tuple
 import logging
 
 
@@ -239,3 +239,41 @@ class SqliteDbase:
             self.logger.debug(f'Time intersection added successful')
         except sqlite3.IntegrityError:
             self.logger.error(f'Fail adding time intersection')
+
+    def get_time_intersections(self) -> List[Tuple[int, int, int, datetime,
+                                                   datetime]]:
+        query = 'SELECT * FROM time_intersection;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        src_data = [list(x) for x in cursor.fetchall()]
+
+        records = []
+        for rec in src_data:
+            record = rec[:3]
+            for i in range(2):
+                dt = datetime.strptime(rec[3 + i], '%Y-%m-%d %H:%M:%S')
+                record.append(dt)
+            records.append(tuple(record))
+        return records
+
+    def get_seis_file_path_by_id(self, id_val: int) -> Union[str, None]:
+        query = f'SELECT path from seis_files WHERE id={id_val}'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        record = cursor.fetchone()
+        if not record:
+            return None
+        else:
+            return record[0]
+
+    def add_energies(self, pair_id: int, energies: List[List[float]]):
+        query_template = 'INSERT INTO seis_energy(time_intersection_id,' \
+                             ' minute_id, Ex, Ey, Ez) VALUES ' \
+                             '({id_val}, {minute_id}, {e_x}, {e_y}, {e_z});'
+        for index, energy_xyz in enumerate(energies):
+            query = query_template.format(
+                id_val=pair_id, minute_id=index, e_x=energy_xyz[0],
+                e_y=energy_xyz[1], e_z=energy_xyz[2])
+            self.connection.cursor().execute(query)
+            self.connection.commit()
+
