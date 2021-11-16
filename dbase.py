@@ -206,8 +206,8 @@ class SqliteDbase:
         sensor_id = self.add_seismometer(sensor)
         station_id = self.add_station(station)
 
-        datetime_start_str = datetime_start.strftime('%Y-%m-%d %M:%H:%S')
-        datetime_stop_str = datetime_stop.strftime('%Y-%m-%d %M:%H:%S')
+        datetime_start_str = datetime_start.strftime('%Y-%m-%d %H:%M:%S')
+        datetime_stop_str = datetime_stop.strftime('%Y-%m-%d %H:%M:%S')
 
         query = 'INSERT INTO seis_files(sensor_id, station_id, ' \
                 'datetime_start, datetime_stop, path) ' \
