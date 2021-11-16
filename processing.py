@@ -46,7 +46,9 @@ class Processing:
                 spectrum_data = spectrum(signal, bin_data.resample_frequency)
                 energy_val = spectrum_energy(spectrum_data, (f_min, f_max))
                 component_energy.append(energy_val)
-            energies.append(component_energy)
+            full_energy = (sum((x ** 2 for x in component_energy))) ** 0.5
+            all_energies = component_energy + [full_energy]
+            energies.append(all_energies)
 
         self.logger.debug(f'Energy calculation for {seis_file_path} finished')
         return energies
