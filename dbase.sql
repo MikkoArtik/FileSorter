@@ -10,6 +10,7 @@ CREATE TABLE links(
     link_id INTEGER NOT NULL,
     filename VARCHAR(100) UNIQUE NOT NULL,
     is_exist int DEFAULT 0,
+    UNIQUE(chain_id, link_id),
     FOREIGN KEY (chain_id) REFERENCES chains(id)
 );
 
@@ -48,6 +49,15 @@ CREATE TABLE tsf_files(
     datetime_stop DATETIME NOT NULL,
     path TEXT UNIQUE NOT NULL);
 
+CREATE TABLE gravity_measures(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dat_file_id INTEGER NOT NULL,
+    datetime_val DATETIME NOT NULL,
+    corr_grav REAL NOT NULL DEFAULT 0,
+    UNIQUE(dat_file_id, datetime_val),
+    FOREIGN KEY (dat_file_id) REFERENCES dat_files(id) ON DELETE CASCADE
+);
+
 CREATE TABLE seis_files(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     sensor_id INTEGER NOT NULL,
@@ -68,11 +78,11 @@ CREATE TABLE time_intersection(
     FOREIGN KEY(seis_id) REFERENCES seis_files(id)
 );
 
-
 CREATE TABLE minutes_intersection(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     time_intersection_id INTEGER NOT NULL,
     minute_index INTEGER NOT NULL,
+    UNIQUE(time_intersection_id, minute_index),
     FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
 );
 
@@ -97,13 +107,11 @@ dat_files as g JOIN seis_files as s ON g.station_id = s.station_id AND
 MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s
 .datetime_stop);
 
-
 CREATE VIEW minimal_energy
 AS
 SELECT time_intersection_id, minute_id, Ez FROM seis_energy
 GROUP BY time_intersection_id
 HAVING Efull = MIN(EFull);
-
 
 CREATE VIEW energy_ratio
 AS
