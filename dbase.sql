@@ -89,3 +89,15 @@ s.datetime_stop as seis_datetime_stop
 dat_files as g JOIN seis_files as s ON g.station_id = s.station_id AND
 MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s
 .datetime_stop);
+
+CREATE VIEW minimal_energy
+AS
+SELECT time_intersection_id, minute_id, Ez FROM seis_energy
+GROUP BY time_intersection_id
+HAVING Efull = MIN(EFull);
+
+CREATE VIEW energy_ratio
+AS
+SELECT se.time_intersection_id, se.minute_id, se.Ez / me.eZ as z_ratio
+FROM seis_energy AS se
+JOIN minimal_energy AS me ON se.time_intersection_id=me.time_intersection_id;
