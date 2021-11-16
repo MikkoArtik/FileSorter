@@ -145,6 +145,16 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'status for link with id {link_id} not change')
 
+    def get_id_dat_file_by_path(self, path: str) -> Union[int, None]:
+        query = f'SELECT id FROM dat_files WHERE path=\'{path}\''
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        records = cursor.fetchone()
+        if not records:
+            return None
+        else:
+            return records[0]
+
     def add_dat_file(self, grav_number: str, station: str,
                      datetime_start: datetime, datetime_stop: datetime,
                      path: str):
@@ -168,6 +178,14 @@ class SqliteDbase:
             self.logger.debug(f'DAT-file with path {path} added successful')
         except sqlite3.IntegrityError:
             self.logger.error(f'DAT-file with path {path} not add to dbase')
+
+    def add_gravity_measure(self, dat_file_id: int, datetime_val: datetime,
+                            corr_grav: float):
+        query = 'INSERT INTO gravity_measures (dat_file_id, datetime_val, ' \
+                                             f'corr_grav) VALUES ' \
+                f'({dat_file_id}, \'{datetime_val}\', {corr_grav});'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
 
     def add_tsf_file(self, dev_num_part: str, datetime_start: datetime,
                      datetime_stop: datetime, path: str):
@@ -263,15 +281,33 @@ class SqliteDbase:
         else:
             return record[0]
 
-    def add_energies(self, pair_id: int, energies: List[List[float]]):
-        query_template = 'INSERT INTO seis_energy(time_intersection_id,' \
-                             ' minute_id, Ex, Ey, Ez, Efull) VALUES ' \
-                             '({id_val}, {minute_id}, ' \
-                             '{e_x}, {e_y}, {e_z}, {e_f});'
-        for index, energy_xyzf in enumerate(energies):
-            query = query_template.format(
-                id_val=pair_id, minute_id=index, e_x=energy_xyzf[0],
-                e_y=energy_xyzf[1], e_z=energy_xyzf[2], e_f=energy_xyzf[3])
+    def add_minute(self, time_intersection_id: int, minute_index: int) -> int:
+        query = 'INSERT INTO minutes_intersection(time_intersection_id, ' \
+                                                 'minute_index) VALUES (' \
+                f'{time_intersection_id}, {minute_index});'
+        try:
             self.connection.cursor().execute(query)
             self.connection.commit()
+        except sqlite3.IntegrityError:
+            pass
 
+        query = 'SELECT id FROM minutes_intersection ' \
+                f'WHERE time_intersection_id={time_intersection_id} AND ' \
+                f'minute_index={minute_index};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        records = cursor.fetchone()
+        return records[0]
+
+    def add_energies(self, time_intersection_id: int,
+                     energies: List[List[float]]):
+        query_template = 'INSERT INTO seis_energy(minute_id, Ex, Ey, Ez, ' \
+                                                 'Efull) ' \
+                         'VALUES ({minute_id}, {e_x}, {e_y}, {e_z}, {e_f});'
+        for index, energy_xyzf in enumerate(energies):
+            minute_id = self.add_minute(time_intersection_id, index)
+            query = query_template.format(
+                minute_id=minute_id, e_x=energy_xyzf[0], e_y=energy_xyzf[1],
+                e_z=energy_xyzf[2], e_f=energy_xyzf[3])
+            self.connection.cursor().execute(query)
+            self.connection.commit()
