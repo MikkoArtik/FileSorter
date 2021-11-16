@@ -21,7 +21,7 @@ class Processing:
         self.db = SqliteDbase(self.config.export_root)
         self.logger = logging.getLogger('Processing')
 
-    def add_origin_energies(self, seis_file_path: str, datetime_min: datetime,
+    def get_origin_energies(self, seis_file_path: str, datetime_min: datetime,
                             datetime_max: datetime,
                             split_seconds=60) -> List[List[float]]:
         self.logger.debug(f'Starting energy calculation for {seis_file_path}')
@@ -51,13 +51,13 @@ class Processing:
         self.logger.debug(f'Energy calculation for {seis_file_path} finished')
         return energies
 
-    def set_origin_energies(self):
+    def save_origin_energies(self):
         records = self.db.get_time_intersections()
         for i, record in enumerate(records):
             pair_id, seis_file_id = record[0], record[2]
             min_datetime, max_datetime = record[3:5]
             filepath = self.db.get_seis_file_path_by_id(seis_file_id)
-            energies = self.add_origin_energies(filepath, min_datetime,
+            energies = self.get_origin_energies(filepath, min_datetime,
                                                 max_datetime)
             self.db.add_energies(pair_id, energies)
             self.logger.debug(f'Remain - {len(records) - i - 1} files')
