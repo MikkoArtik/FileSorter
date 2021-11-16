@@ -110,9 +110,11 @@ class DATFile:
                 next(file_ctx)
 
             for line in file_ctx:
-                split_line = line.rstrip().split('\t')
-                if not split_line:
+                line = line.rstrip()
+                if not line:
                     continue
+
+                split_line = line.split('\t')
 
                 datetime_line = split_line[1] + ' ' + split_line[2]
                 datetime_val = datetime.strptime(datetime_line,
