@@ -68,15 +68,22 @@ CREATE TABLE time_intersection(
     FOREIGN KEY(seis_id) REFERENCES seis_files(id)
 );
 
-CREATE TABLE seis_energy(
+
+CREATE TABLE minutes_intersection(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     time_intersection_id INTEGER NOT NULL,
+    minute_index INTEGER NOT NULL,
+    FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
+);
+
+CREATE TABLE seis_energy(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     minute_id INTEGER NOT NULL,
     Ex REAL NOT NULL DEFAULT 0,
     Ey REAL NOT NULL DEFAULT 0,
     Ez REAL NOT NULL DEFAULT 0,
     Efull REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (time_intersection_id) REFERENCES seis_files(id) ON DELETE CASCADE
+    FOREIGN KEY (minute_id) REFERENCES minutes_intersection(id) ON DELETE CASCADE
 );
 
 
