@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Tuple
 
 
 STRUCTURE = {
@@ -30,6 +30,11 @@ STRUCTURE = {
                 'sensor': 2,
             }
         }
+    },
+    'processing': {
+        'f_min': 0.1,
+        'f_max': 10,
+        'epsilon': 3
     },
     'export': {
         'root': 'path'
@@ -94,3 +99,7 @@ class ConfigFile:
 
         sensor = split_name[sensor_index]
         return SeismicFileAttr(filename, point, sensor)
+
+    def get_bandpass_freqs(self) -> Tuple[float, float]:
+        params = self.data['processing']
+        return params['f_min'], params['f_max']
