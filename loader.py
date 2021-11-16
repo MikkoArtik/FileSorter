@@ -62,6 +62,14 @@ class Loader:
                 self.logger.debug(f'Chain info from file {path} added')
         self.logger.debug('Loading chains finished')
 
+    def load_gravity_measures(self, dat_file: DATFile):
+        id_val = self.dbase.get_id_dat_file_by_path(dat_file.path)
+        if not id_val:
+            return
+        for measure in dat_file.extract_all_measures():
+            self.dbase.add_gravity_measure(id_val, measure.datetime_val,
+                                           measure.corr_grav_value)
+
     def load_dat_files(self):
         self.logger.debug('Loading dat-files...')
         for root, _, files in os.walk(self.gravimetric_root):
@@ -77,6 +85,8 @@ class Loader:
                                         dat_file.station,
                                         dat_file.datetime_start,
                                         dat_file.datetime_stop, path)
+
+                self.load_gravity_measures(dat_file)
                 self.logger.debug(f'DAT-file {path} added')
         self.logger.debug('Loading dat-files finished')
 
