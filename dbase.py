@@ -214,14 +214,7 @@ class SqliteDbase:
         for rec in src_data:
             record = rec[:2]
             for i in range(4):
-                try:
-                    dt = datetime.strptime(rec[2 + i], '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    try:
-                        dt = datetime.strptime(rec[2 + i],
-                                               '%Y-%m-%d %H:%M:%S.%f')
-                    except ValueError:
-                        break
+                dt = datetime.strptime(rec[2 + i], '%Y-%m-%d %H:%M:%S')
                 record.append(dt)
             records.append(record)
         return records
