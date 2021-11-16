@@ -26,7 +26,7 @@ class Processing:
                             split_seconds=60) -> List[List[float]]:
         self.logger.debug(f'Starting energy calculation for {seis_file_path}')
         intervals_count = int(
-            (datetime_max - datetime_min).total_seconds()/split_seconds)
+            (datetime_max - datetime_min).total_seconds() / split_seconds)
 
         bin_data = BinaryFile(seis_file_path, use_avg_values=True)
         f_min, f_max = self.config.get_bandpass_freqs()
