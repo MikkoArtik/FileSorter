@@ -99,23 +99,22 @@ CREATE TABLE seis_energy(
 
 CREATE VIEW grav_seis_times
 AS
-SELECT g.id as grav_id, s.id as seis_id, g.datetime_start as grav_dt_start,
-g.datetime_stop as grav_dt_stop, s.datetime_start as seis_datetime_start,
-s.datetime_stop as seis_datetime_stop
- FROM
-dat_files as g JOIN seis_files as s ON g.station_id = s.station_id AND
-MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s
-.datetime_stop);
+SELECT g.id AS grav_id, s.id AS seis_id, g.datetime_start AS grav_dt_start,
+g.datetime_stop AS grav_dt_stop, s.datetime_start AS seis_datetime_start,
+s.datetime_stop AS seis_datetime_stop
+FROM dat_files AS g JOIN seis_files AS s ON g.station_id = s.station_id AND
+MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop);
 
 CREATE VIEW minimal_energy
 AS
-SELECT mi.time_intersection_id, mi.minute_index, Ez FROM seis_energy AS se
+SELECT mi.time_intersection_id, mi.id AS minute_id, Ez
+FROM seis_energy AS se
 JOIN minutes_intersection AS mi ON se.minute_id=mi.id
 GROUP BY time_intersection_id
 HAVING Efull = MIN(EFull);
 
 CREATE VIEW energy_ratio
 AS
-SELECT se.time_intersection_id, se.minute_id, se.Ez / me.eZ as z_ratio
-FROM seis_energy AS se
-JOIN minimal_energy AS me ON se.time_intersection_id=me.time_intersection_id;
+SELECT se.minute_id, se.Ez/me.eZ as energy_ratio FROM seis_energy as se
+JOIN minutes_intersection as mi ON se.minute_id=mi.id
+JOIN minimal_energy as me ON me.time_intersection_id=mi.time_intersection_id;
