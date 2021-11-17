@@ -109,7 +109,8 @@ MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s
 
 CREATE VIEW minimal_energy
 AS
-SELECT time_intersection_id, minute_id, Ez FROM seis_energy
+SELECT mi.time_intersection_id, mi.minute_index, Ez FROM seis_energy AS se
+JOIN minutes_intersection AS mi ON se.minute_id=mi.id
 GROUP BY time_intersection_id
 HAVING Efull = MIN(EFull);
 
