@@ -8,6 +8,7 @@ from seiscore import BinaryFile
 from seiscore.binaryfile.binaryfile import BadHeaderData
 
 from gravic_files import DATFile, TSFile, ChainFile
+
 from dbase import SqliteDbase
 from config import ConfigFile
 
@@ -17,19 +18,19 @@ def get_intersection_time(grav_time: datetime, seis_time: datetime,
     if seis_time == grav_time:
         return seis_time
 
-    variant_datetime = datetime(seis_time.year, seis_time.month,
-                                seis_time.day, seis_time.hour,
-                                seis_time.minute, grav_time.second)
+    result = seis_time + timedelta(
+        seconds=grav_time.second - seis_time.second)
     if edge_type == 'left':
-        if variant_datetime > seis_time:
-            return variant_datetime
-        else:
-            return variant_datetime + timedelta(minutes=1)
+        if seis_time < grav_time:
+            return grav_time
+        if result < seis_time:
+            result += timedelta(minutes=1)
     else:
-        if variant_datetime < seis_time:
-            return variant_datetime
-        else:
-            return variant_datetime + timedelta(minutes=-1)
+        if seis_time > grav_time:
+            return grav_time
+        if result > seis_time:
+            result += timedelta(minutes=-1)
+    return result
 
 
 class Loader:
@@ -66,7 +67,7 @@ class Loader:
         id_val = self.dbase.get_id_dat_file_by_path(dat_file.path)
         if not id_val:
             return
-        for measure in dat_file.extract_all_measures():
+        for measure in dat_file.measures:
             self.dbase.add_gravity_measure(id_val, measure.datetime_val,
                                            measure.corr_grav_value)
 
@@ -81,6 +82,12 @@ class Loader:
                 except OSError:
                     self.logger.debug(f'File {path} skipped')
                     continue
+
+                if not dat_file.is_good_measures_data:
+                    self.logger.error(
+                        f'File {filename} incorrect time domain. Skipped')
+                    continue
+
                 self.dbase.add_dat_file(dat_file.device_full_number,
                                         dat_file.station,
                                         dat_file.datetime_start,
