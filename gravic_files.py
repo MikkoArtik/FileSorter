@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict, NamedTuple
+from typing import Tuple, List, Dict, NamedTuple, Union
 from datetime import datetime
 from datetime import timedelta
 import os
@@ -23,6 +23,17 @@ def is_dat_file(path: str):
     with open(path) as file_ctx:
         first_line = file_ctx.readline().rstrip()
         return first_line == DAT_HEADER_FIRST_LINE
+
+
+def is_good_measures_data(measures: List[Measure]) -> bool:
+    for i in range(len(measures) - 1):
+        top_datetime = measures[i].datetime_val
+        bottom_datetime = measures[i + 1].datetime_val
+        delta_sec = (bottom_datetime - top_datetime).total_seconds()
+        if delta_sec != 60:
+            return False
+    else:
+        return True
 
 
 class TSFile:
@@ -70,6 +81,7 @@ class DATFile:
 
         self.path = path
         self.__first_line, self.__last_line = self.__get_last_lines()
+        self.measures = self.extract_all_measures()
 
     def __get_last_lines(self) -> Tuple[str, str]:
         with open(self.path) as file_ctx:
@@ -103,7 +115,11 @@ class DATFile:
             need_line = f.readlines()[2].rstrip()
         return need_line.split('\t')[-1]
 
-    def extract_all_measures(self) -> List[Measure]:
+    @property
+    def is_good_measures_data(self) -> bool:
+        return True if self.measures else False
+
+    def extract_all_measures(self) -> Union[None, List[Measure]]:
         measures = []
         with open(self.path) as file_ctx:
             for _ in range(DAT_FIRST_LINE_INDEX):
@@ -122,6 +138,9 @@ class DATFile:
                 corr_grav_val = float(split_line[3])
                 single_measure = Measure(datetime_val, corr_grav_val)
                 measures.append(single_measure)
+
+        if not is_good_measures_data(measures):
+            return None
         return measures
 
 
