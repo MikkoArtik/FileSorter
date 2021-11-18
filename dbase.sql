@@ -118,3 +118,12 @@ AS
 SELECT se.minute_id, se.Ez/me.eZ as energy_ratio FROM seis_energy as se
 JOIN minutes_intersection as mi ON se.minute_id=mi.id
 JOIN minimal_energy as me ON me.time_intersection_id=mi.time_intersection_id;
+
+CREATE VIEW grav_level
+AS
+SELECT ti.id as time_intersection_id, gm.corr_grav as avg_grav
+FROM minimal_energy as me
+JOIN time_intersection as ti ON me.time_intersection_id=ti.id
+JOIN minutes_intersection as mi ON me.minute_id=mi.id
+JOIN gravity_measures as gm ON gm.dat_file_id=ti.grav_dat_id
+WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
