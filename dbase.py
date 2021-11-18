@@ -333,14 +333,16 @@ class SqliteDbase:
         self.logger.debug(f'Seismic correction with minute_id={minute_id} '
                           f'value={seis_correction} added')
 
-    def get_using_seismic_files(self) -> List[Tuple[str, datetime, datetime]]:
+    def get_using_seismic_files(self) -> List[Tuple[int, str,
+                                                    datetime, datetime]]:
         query = 'SELECT * FROM using_seis_files;'
         cursor = self.connection.cursor()
         cursor.execute(query)
 
         records = []
         for rec in cursor.fetchall():
-            dt_start = datetime.strptime(rec[1], '%Y-%m-%d %H:%M:%S')
-            dt_stop = datetime.strptime(rec[2], '%Y-%m-%d %H:%M:%S')
-            records.append((rec[0], dt_start, dt_stop))
+            file_id, path, dt_start_str, dt_stop_str = rec
+            dt_start = datetime.strptime(dt_start_str, '%Y-%m-%d %H:%M:%S')
+            dt_stop = datetime.strptime(dt_stop_str, '%Y-%m-%d %H:%M:%S')
+            records.append((file_id, path, dt_start, dt_stop))
         return records
