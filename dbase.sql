@@ -127,3 +127,13 @@ JOIN time_intersection as ti ON me.time_intersection_id=ti.id
 JOIN minutes_intersection as mi ON me.minute_id=mi.id
 JOIN gravity_measures as gm ON gm.dat_file_id=ti.grav_dat_id
 WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
+
+CREATE VIEW pre_correction
+AS
+SELECT mi.id as minute_id, round(gl.avg_grav-gm.corr_grav, 4) as amplitude, er.energy_ratio
+FROM minutes_intersection as mi
+JOIN time_intersection as ti ON mi.time_intersection_id=ti.id
+JOIN gravity_measures as gm ON gm.dat_file_id=ti.grav_dat_id
+JOIN grav_level as gl ON gl.time_intersection_id=ti.id
+JOIN energy_ratio as er ON er.minute_id=mi.id
+WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
