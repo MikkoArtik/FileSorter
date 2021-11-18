@@ -144,3 +144,9 @@ JOIN gravity_measures as gm ON gm.dat_file_id=ti.grav_dat_id
 JOIN grav_level as gl ON gl.time_intersection_id=ti.id
 JOIN energy_ratio as er ON er.minute_id=mi.id
 WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
+
+CREATE VIEW using_seis_files
+AS
+SELECT sf.id as file_id, sf.path, ti.datetime_start, ti.datetime_stop
+FROM time_intersection as ti
+JOIN seis_files as sf ON ti.seis_id=sf.id;
