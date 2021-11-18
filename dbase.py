@@ -277,8 +277,10 @@ class SqliteDbase:
         cursor.execute(query)
         record = cursor.fetchone()
         if not record:
+            self.logger.error(f'Seismic file with id={id_val} not found')
             return None
         else:
+            self.logger.info(f'Seismic file: id={id_val} path={record[0]}')
             return record[0]
 
     def add_minute(self, time_intersection_id: int, minute_index: int) -> int:
@@ -311,3 +313,22 @@ class SqliteDbase:
                 e_z=energy_xyzf[2], e_f=energy_xyzf[3])
             self.connection.cursor().execute(query)
             self.connection.commit()
+
+    def get_pre_correction_data(self) -> List[Tuple[int, float, float]]:
+        query = 'SELECT * FROM pre_correction;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def clear_corrections(self):
+        query = 'DELETE FROM corrections;'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
+
+    def add_single_correction(self, minute_id: int, seis_correction: float):
+        query = 'INSERT INTO corrections(minute_id, seis_corr) VALUES ' \
+                f'({minute_id}, {seis_correction});'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
+        self.logger.debug(f'Seismic correction with minute_id={minute_id} '
+                          f'value={seis_correction} added')
