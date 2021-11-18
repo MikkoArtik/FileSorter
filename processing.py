@@ -12,6 +12,10 @@ from config import ConfigFile
 from dbase import SqliteDbase
 
 
+def get_correction_value(grav_ampl: float, energy_ratio: float) -> float:
+    return round(grav_ampl * energy_ratio ** 0.5, 4)
+
+
 class Processing:
     def __init__(self, config_file_path: str):
         if not os.path.exists(config_file_path):
@@ -63,3 +67,10 @@ class Processing:
                                          max_datetime)
             self.db.add_energies(pair_id, energies)
             self.logger.debug(f'Remain - {len(records) - i - 1} files')
+
+    def add_corrections(self):
+        self.db.clear_corrections()
+        for record in self.db.get_pre_correction_data():
+            minute_id, amplitude, energy_ratio = record
+            correction_value = get_correction_value(amplitude, energy_ratio)
+            self.db.add_single_correction(minute_id, correction_value)
