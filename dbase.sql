@@ -96,6 +96,13 @@ CREATE TABLE seis_energy(
     FOREIGN KEY (minute_id) REFERENCES minutes_intersection(id) ON DELETE CASCADE
 );
 
+CREATE TABLE corrections(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    minute_id INTEGER NOT NULL,
+    seis_corr REAL NOT NULL DEFAULT 0,
+    FOREIGN KEY (minute_id) REFERENCES minutes_intersection(id) ON DELETE CASCADE
+);
+
 
 CREATE VIEW grav_seis_times
 AS
