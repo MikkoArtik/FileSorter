@@ -222,6 +222,52 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'seismic file with path {path} not add')
 
+        query = f'SELECT id FROM seis_files WHERE path=\'{path}\''
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        id_val = cursor.fetchone()[0]
+
+        query = f'INSERT INTO seis_files_defect_info(seis_id) ' \
+                f'VALUES ({id_val});'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
+
+    def get_seismic_files_for_checking(self) -> List[Tuple[int, str, List[str]]]:
+        query = 'SELECT * FROM need_check_seis_files;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+
+        records = []
+        for rec in cursor.fetchall():
+            file_id, path, x_channel, y_channel, z_channel = rec
+            components = []
+            if x_channel == 'Unknown':
+                components.append('X')
+            if y_channel == 'Unknown':
+                components.append('Y')
+            if z_channel == 'Unknown':
+                components.append('Z')
+            if not components:
+                continue
+            records.append((file_id, path, components))
+        return records
+
+    def update_file_checking(self, file_id: int, component: str,
+                             conclusion: str):
+        if component.upper() == 'X':
+            query = f'UPDATE seis_files_defect_info ' \
+                    f'SET x_channel=\'{conclusion}\' WHERE seis_id={file_id};'
+        elif component.upper() == 'Y':
+            query = f'UPDATE seis_files_defect_info ' \
+                    f'SET y_channel=\'{conclusion}\' WHERE seis_id={file_id};'
+        elif component.upper() == 'Z':
+            query = f'UPDATE seis_files_defect_info ' \
+                    f'SET z_channel=\'{conclusion}\' WHERE seis_id={file_id};'
+        else:
+            return
+        self.connection.cursor().execute(query)
+        self.connection.commit()
+
     def get_grav_seis_times(self):
         query = 'SELECT * FROM grav_seis_times;'
         cursor = self.connection.cursor()
@@ -332,17 +378,3 @@ class SqliteDbase:
         self.connection.commit()
         self.logger.debug(f'Seismic correction with minute_id={minute_id} '
                           f'value={seis_correction} added')
-
-    def get_using_seismic_files(self) -> List[Tuple[int, str,
-                                                    datetime, datetime]]:
-        query = 'SELECT * FROM using_seis_files;'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-
-        records = []
-        for rec in cursor.fetchall():
-            file_id, path, dt_start_str, dt_stop_str = rec
-            dt_start = datetime.strptime(dt_start_str, '%Y-%m-%d %H:%M:%S')
-            dt_stop = datetime.strptime(dt_stop_str, '%Y-%m-%d %H:%M:%S')
-            records.append((file_id, path, dt_start, dt_stop))
-        return records

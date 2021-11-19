@@ -68,6 +68,15 @@ CREATE TABLE seis_files(
     FOREIGN KEY(sensor_id) REFERENCES seismometers(id),
     FOREIGN KEY(station_id) REFERENCES stations(id));
 
+CREATE TABLE seis_files_defect_info(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    seis_id INTEGER NOT NULL,
+    x_channel VARCHAR(10) CHECK(x_channel IN ('Good', 'Bad', 'Unknown')) DEFAULT 'Unknown',
+    y_channel VARCHAR(10) CHECK(x_channel IN ('Good', 'Bad', 'Unknown')) DEFAULT 'Unknown',
+    z_channel VARCHAR(10) CHECK(x_channel IN ('Good', 'Bad', 'Unknown')) DEFAULT 'Unknown',
+    FOREIGN KEY (seis_id) REFERENCES seis_files(id)
+);
+
 CREATE TABLE time_intersection(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     grav_dat_id INTEGER NOT NULL,
@@ -104,13 +113,29 @@ CREATE TABLE corrections(
 );
 
 
+CREATE VIEW need_check_seis_files
+AS
+SELECT sf.id, sf.path, di.x_channel, di.y_channel, di.z_channel
+FROM seis_files AS sf
+JOIN seis_files_defect_info AS di ON sf.id=di.seis_id
+WHERE (di.x_channel='Unknown' OR di.y_channel='Unknown' OR di.z_channel='Unknown') AND (di.x_channel!='Bad' AND di.y_channel!='Bad'
+AND di.z_channel!='Bad');
+
+CREATE VIEW good_seis_files
+AS
+SELECT sf.id
+FROM seis_files AS sf
+JOIN seis_files_defect_info AS di ON sf.id=di.seis_id
+WHERE di.x_channel!='Bad' AND di.y_channel!='Bad' AND di.z_channel!='Bad';
+
 CREATE VIEW grav_seis_times
 AS
 SELECT g.id AS grav_id, s.id AS seis_id, g.datetime_start AS grav_dt_start,
 g.datetime_stop AS grav_dt_stop, s.datetime_start AS seis_datetime_start,
 s.datetime_stop AS seis_datetime_stop
 FROM dat_files AS g JOIN seis_files AS s ON g.station_id = s.station_id AND
-MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop);
+MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
+JOIN good_seis_files as gsf ON s.id=gsf.id;
 
 CREATE VIEW minimal_energy
 AS
@@ -122,31 +147,31 @@ HAVING Efull = MIN(EFull);
 
 CREATE VIEW energy_ratio
 AS
-SELECT se.minute_id, se.Ez/me.eZ as energy_ratio FROM seis_energy as se
-JOIN minutes_intersection as mi ON se.minute_id=mi.id
-JOIN minimal_energy as me ON me.time_intersection_id=mi.time_intersection_id;
+SELECT se.minute_id, se.Ez/me.eZ AS energy_ratio FROM seis_energy AS se
+JOIN minutes_intersection AS mi ON se.minute_id=mi.id
+JOIN minimal_energy AS me ON me.time_intersection_id=mi.time_intersection_id;
 
 CREATE VIEW grav_level
 AS
-SELECT ti.id as time_intersection_id, gm.corr_grav as avg_grav
-FROM minimal_energy as me
-JOIN time_intersection as ti ON me.time_intersection_id=ti.id
-JOIN minutes_intersection as mi ON me.minute_id=mi.id
-JOIN gravity_measures as gm ON gm.dat_file_id=ti.grav_dat_id
+SELECT ti.id AS time_intersection_id, gm.corr_grav AS avg_grav
+FROM minimal_energy AS me
+JOIN time_intersection AS ti ON me.time_intersection_id=ti.id
+JOIN minutes_intersection AS mi ON me.minute_id=mi.id
+JOIN gravity_measures AS gm ON gm.dat_file_id=ti.grav_dat_id
 WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
 
 CREATE VIEW pre_correction
 AS
-SELECT mi.id as minute_id, round(gl.avg_grav-gm.corr_grav, 4) as amplitude, er.energy_ratio
-FROM minutes_intersection as mi
-JOIN time_intersection as ti ON mi.time_intersection_id=ti.id
-JOIN gravity_measures as gm ON gm.dat_file_id=ti.grav_dat_id
-JOIN grav_level as gl ON gl.time_intersection_id=ti.id
-JOIN energy_ratio as er ON er.minute_id=mi.id
+SELECT mi.id AS minute_id, round(gl.avg_grav-gm.corr_grav, 4) AS amplitude, er.energy_ratio
+FROM minutes_intersection AS mi
+JOIN time_intersection AS ti ON mi.time_intersection_id=ti.id
+JOIN gravity_measures AS gm ON gm.dat_file_id=ti.grav_dat_id
+JOIN grav_level AS gl ON gl.time_intersection_id=ti.id
+JOIN energy_ratio AS er ON er.minute_id=mi.id
 WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
 
 CREATE VIEW using_seis_files
 AS
-SELECT sf.id as file_id, sf.path, ti.datetime_start, ti.datetime_stop
-FROM time_intersection as ti
-JOIN seis_files as sf ON ti.seis_id=sf.id;
+SELECT sf.id AS file_id, sf.path, ti.datetime_start, ti.datetime_stop
+FROM time_intersection AS ti
+JOIN seis_files AS sf ON ti.seis_id=sf.id;
