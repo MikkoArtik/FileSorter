@@ -303,7 +303,8 @@ class SqliteDbase:
 
     def get_time_intersections(self) -> List[Tuple[int, int, int, datetime,
                                                    datetime]]:
-        query = 'SELECT * FROM time_intersection;'
+        query = 'SELECT * FROM time_intersection WHERE seis_id IN ' \
+                '(SELECT id FROM good_seis_files);'
         cursor = self.connection.cursor()
         cursor.execute(query)
         src_data = [list(x) for x in cursor.fetchall()]
