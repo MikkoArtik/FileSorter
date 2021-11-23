@@ -178,7 +178,7 @@ JOIN seis_files AS sf ON ti.seis_id=sf.id;
 
 CREATE VIEW post_correction
 AS
-SELECT l.chain_id, ti.id as time_intersection_id, mi.id as minute_intersection_id, l.link_id, gm.id - (SELECT MIN(id) FROM gravity_measures as gm WHERE gm.dat_file_id=df.id) + 1 as cycle, ifnull(c.seis_corr, 0) as seis_corr  from links as l
+SELECT l.chain_id, ti.id as time_intersection_id, mi.id as minute_intersection_id, l.link_id, gm.id - (SELECT MIN(id) FROM gravity_measures as gm WHERE gm.dat_file_id=df.id) + 1 as cycle, c.seis_corr as seis_corr from links as l
 JOIN dat_files as df ON df.link_id=l.id
 JOIN gravity_measures as gm ON gm.dat_file_id=df.id
 LEFT JOIN time_intersection as ti ON ti.grav_dat_id=df.id
