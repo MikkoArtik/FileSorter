@@ -175,3 +175,13 @@ AS
 SELECT sf.id AS file_id, sf.path, ti.datetime_start, ti.datetime_stop
 FROM time_intersection AS ti
 JOIN seis_files AS sf ON ti.seis_id=sf.id;
+
+CREATE VIEW post_correction
+AS
+SELECT l.chain_id, ti.id as time_intersection_id, mi.id as minute_intersection_id, l.link_id, gm.id - (SELECT MIN(id) FROM gravity_measures as gm WHERE gm.dat_file_id=df.id) + 1 as cycle, (CASE WHEN c.seis_corr is null THEN 1 ELSE 0 END) as is_bad, ifnull(c.seis_corr, 0) as seis_corr  from links as l
+JOIN dat_files as df ON df.link_id=l.id
+JOIN gravity_measures as gm ON gm.dat_file_id=df.id
+LEFT JOIN time_intersection as ti ON ti.grav_dat_id=df.id
+LEFT JOIN minutes_intersection as mi ON mi.time_intersection_id=ti.id AND gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch')
+LEFT JOIN corrections as c ON c.minute_id=mi.id
+ORDER BY chain_id ASC, l.link_id ASC, gm.id ASC, ti.id ASC;
