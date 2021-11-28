@@ -187,10 +187,13 @@ WHERE seismometer_id IS NOT NULL;
 
 CREATE VIEW post_correction
 AS
-SELECT l.chain_id, ti.id as time_intersection_id, mi.id as minute_intersection_id, l.link_id, gm.id - (SELECT MIN(id) FROM gravity_measures as gm WHERE gm.dat_file_id=df.id) + 1 as cycle, c.seis_corr as seis_corr from links as l
+SELECT l.chain_id, l.id as link_id, ti.id as time_intersection_id, s.id as seismometer_id, g.id as gravimeter_id, gm.id - (SELECT MIN(id) FROM gravity_measures as gm WHERE gm.dat_file_id=df.id) + 1 as cycle, c.seis_corr as seis_corr from links as l
 JOIN dat_files as df ON df.link_id=l.id
+JOIN gravimeters as g ON g.id=df.gravimeter_id
 JOIN gravity_measures as gm ON gm.dat_file_id=df.id
 LEFT JOIN time_intersection as ti ON ti.grav_dat_id=df.id
 LEFT JOIN minutes_intersection as mi ON mi.time_intersection_id=ti.id AND gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch')
 LEFT JOIN corrections as c ON c.minute_id=mi.id
+LEFT JOIN seis_files AS sf ON sf.id=ti.seis_id
+LEFT JOIN seismometers AS s ON s.id=sf.sensor_id
 ORDER BY chain_id ASC, l.link_id ASC, gm.id ASC, ti.id ASC;
