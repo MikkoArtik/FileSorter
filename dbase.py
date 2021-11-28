@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Set
 import logging
 
 
@@ -379,3 +379,107 @@ class SqliteDbase:
         self.connection.commit()
         self.logger.debug(f'Seismic correction with minute_id={minute_id} '
                           f'value={seis_correction} added')
+
+    def get_all_chain_ids(self) -> List[int]:
+        query = 'SELECT id FROM chains;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        ids_list = [x[0] for x in cursor.fetchall()]
+        return ids_list
+
+    def get_links_by_chain_id(self, chain_id: int) -> List[int]:
+        query = f'SELECT id FROM links AS l WHERE l.chain_id={chain_id} ' \
+                f'ORDER BY l.link_id ASC;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        records = cursor.fetchall()
+        return [x[0] for x in records]
+
+    def get_device_pairs_by_chain_id(
+            self, chain_id: int) -> List[Tuple[int, int]]:
+        query = 'SELECT DISTINCT gravimeter_id, seismometer_id ' \
+                f'FROM sensor_pairs WHERE chain_id={chain_id};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        records = cursor.fetchall()
+        if not records:
+            return []
+        return records
+
+    def is_sensor_pair_exists(self, chain_id: int, link_id: int,
+                              gravimeter_id: int,
+                              seismometer_id: int) -> bool:
+        query = 'SELECT COUNT(1) FROM sensor_pairs WHERE ' \
+                f'chain_id={chain_id} AND link_id={link_id} AND ' \
+                f'gravimeter_id={gravimeter_id} AND ' \
+                f'seismometer_id={seismometer_id}'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        if cursor.fetchone()[0]:
+            return True
+        return False
+
+    def get_measures_count_by_link_id(self, link_id: int) -> int:
+        query = 'SELECT COUNT(1) FROM gravity_measures ' \
+                'WHERE dat_file_id=(SELECT id FROM dat_files ' \
+                f'WHERE link_id={link_id})'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def get_session_index(self, chain_id: int, link_id: int) -> int:
+        query = 'SELECT link_id FROM links ' \
+                f'WHERE links.chain_id={chain_id} AND links.id={link_id};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def is_chain_has_corrections(
+            self, chain_id: int, gravimeter_id: int,
+            seismometer_id: int) -> bool:
+        query = 'SELECT COUNT(1) FROM sensor_pairs AS sp WHERE ' \
+                f'sp.chain_id={chain_id} AND ' \
+                f'sp.gravimeter_id={gravimeter_id} AND ' \
+                f'sp.seismometer_id={seismometer_id};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return True if cursor.fetchone()[0] else False
+
+    def get_post_corrections_by_params(
+            self, chain_id: int, link_id: int, gravimeter_id: int,
+            seismometer_id: int) -> List[tuple]:
+        query = 'SELECT cycle, seis_corr FROM post_correction AS pc ' \
+                f'WHERE pc.chain_id={chain_id} AND pc.link_id={link_id} ' \
+                f'AND pc.gravimeter_id={gravimeter_id} AND ' \
+                f'pc.seismometer_id={seismometer_id} ORDER BY cycle;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        records = cursor.fetchall()
+        return records
+
+    def get_chain_datetime_by_id(self, chain_id: int) -> datetime:
+        query = 'SELECT MIN(datetime_start) FROM dat_files as df ' \
+                'WHERE df.link_id IN (SELECT id FROM links as l ' \
+                f'WHERE l.chain_id={chain_id});'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        datetime_str = cursor.fetchone()[0]
+        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+
+    def get_gravimeter_short_number_by_id(self, gravimeter_id: int) -> str:
+        query = 'SELECT substr(number, -4) FROM gravimeters AS g ' \
+                f'WHERE g.id={gravimeter_id};'
+
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        short_number = cursor.fetchone()[0]
+        return short_number
+
+    def get_seismometer_number_by_id(self, seismometer_id: int) -> str:
+        query = 'SELECT number FROM seismometers AS s ' \
+                f'WHERE s.id={seismometer_id};'
+
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        number = cursor.fetchone()[0]
+        return number
