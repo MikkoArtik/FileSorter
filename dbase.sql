@@ -176,6 +176,15 @@ SELECT sf.id AS file_id, sf.path, ti.datetime_start, ti.datetime_stop
 FROM time_intersection AS ti
 JOIN seis_files AS sf ON ti.seis_id=sf.id;
 
+CREATE VIEW sensor_pairs
+AS
+SELECT distinct c.id as chain_id, l.id as link_id, df.gravimeter_id, sf.sensor_id as seismometer_id FROM chains as c
+LEFT JOIN links as l on c.id=l.chain_id
+LEFT JOIN dat_files as df ON df.link_id=l.id
+LEFT JOIN time_intersection as ti ON ti.grav_dat_id=df.id
+LEFT JOIN seis_files AS sf ON sf.id=ti.seis_id
+WHERE seismometer_id IS NOT NULL;
+
 CREATE VIEW post_correction
 AS
 SELECT l.chain_id, ti.id as time_intersection_id, mi.id as minute_intersection_id, l.link_id, gm.id - (SELECT MIN(id) FROM gravity_measures as gm WHERE gm.dat_file_id=df.id) + 1 as cycle, c.seis_corr as seis_corr from links as l
