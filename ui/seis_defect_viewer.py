@@ -172,8 +172,9 @@ def run():
 
 
 if __name__ == '__main__':
-    storage_folder = os.getenv('DATA_PATH')
-    conf_file = os.path.join(storage_folder, 'config_remote.json')
+    # storage_folder = os.getenv('DATA_PATH')
+    conf_file = '/media/michael/Data/Projects/GraviSeismicComparation' \
+                '/ZapolarnoeDeposit/2021/config.json'
     config = ConfigFile(conf_file)
     db = SqliteDbase(config.export_root)
     run()
