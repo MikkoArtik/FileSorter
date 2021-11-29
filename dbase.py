@@ -348,6 +348,11 @@ class SqliteDbase:
         records = cursor.fetchone()
         return records[0]
 
+    def delete_all_energies(self):
+        query = 'DELETE FROM seis_energy;'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
+
     def add_energies(self, time_intersection_id: int,
                      energies: List[List[float]]):
         query_template = 'INSERT INTO seis_energy(minute_id, Ex, Ey, Ez, ' \
