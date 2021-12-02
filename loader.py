@@ -1,9 +1,6 @@
 import os
 import logging
 
-from datetime import datetime
-from datetime import timedelta
-
 from seiscore import BinaryFile
 from seiscore.binaryfile.binaryfile import BadHeaderData
 
