@@ -199,3 +199,9 @@ LEFT JOIN corrections as c ON c.minute_id=mi.id
 LEFT JOIN seis_files AS sf ON sf.id=ti.seis_id
 LEFT JOIN seismometers AS s ON s.id=sf.sensor_id
 ORDER BY chain_id ASC, l.link_id ASC, gm.id ASC, ti.id ASC;
+
+CREATE VIEW pre_plotting
+AS
+SELECT sp.chain_id, ti.id AS time_intersection_id, sp.gravimeter_id, sp.seismometer_id, ti.grav_dat_id AS dat_file_id, ti.seis_id AS seis_file_id FROM sensor_pairs AS sp
+JOIN dat_files AS df ON sp.link_id=df.link_id
+JOIN time_intersection AS ti ON ti.grav_dat_id=df.id;
