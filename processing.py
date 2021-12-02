@@ -220,3 +220,4 @@ class Processing:
         self.set_intersection_times()
         self.save_energies()
         self.add_corrections()
+        self.export_corrections()
