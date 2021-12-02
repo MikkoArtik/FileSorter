@@ -366,7 +366,8 @@ class SqliteDbase:
             self.connection.cursor().execute(query)
             self.connection.commit()
 
-    def get_pre_correction_data(self) -> List[Tuple[int, float, float]]:
+    def get_pre_correction_data(
+            self) -> List[Tuple[int, float, float]]:
         query = 'SELECT * FROM pre_correction;'
         cursor = self.connection.cursor()
         cursor.execute(query)
@@ -424,10 +425,24 @@ class SqliteDbase:
             return True
         return False
 
-    def get_measures_count_by_link_id(self, link_id: int) -> int:
+    def get_gravity_measures_count_by_link_id(self, link_id: int) -> int:
         query = 'SELECT COUNT(1) FROM gravity_measures ' \
                 'WHERE dat_file_id=(SELECT id FROM dat_files ' \
                 f'WHERE link_id={link_id})'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def get_gravity_measures_by_file_id(self, id_val: int) -> List[float]:
+        query = 'SELECT corr_grav FROM gravity_measures ' \
+                f'WHERE dat_file_id={id_val};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return [x[0] for x in cursor.fetchall()]
+
+    def get_gravity_level_by_time_intersection_id(self, id_val: int) -> float:
+        query = 'SELECT avg_grav FROM grav_level ' \
+                f'WHERE time_intersection_id={id_val};'
         cursor = self.connection.cursor()
         cursor.execute(query)
         return cursor.fetchone()[0]
@@ -500,3 +515,42 @@ class SqliteDbase:
         cursor.execute(query)
         records = cursor.fetchall()
         return [x[0] for x in records]
+
+    def get_seis_energy_by_time_intersection_id(
+            self, id_val: int) -> List[Tuple[float, float, float, float]]:
+        query = 'SELECT Ex, Ey, Ez, Efull FROM seis_energy ' \
+            'WHERE minute_id IN (SELECT id FROM minutes_intersection ' \
+            f'WHERE time_intersection_id={id_val});'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def get_seis_corrections_by_time_intersection_id(
+            self, id_val: int) -> List[float]:
+        query = 'SELECT seis_corr FROM corrections ' \
+            'WHERE minute_id IN (SELECT id FROM minutes_intersection ' \
+            f'WHERE time_intersection_id={id_val});'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return [x[0] for x in cursor.fetchall()]
+
+    def get_start_datetime_gravity_measures_by_time_intersection_id(
+            self, id_val: int) -> datetime:
+        query = 'SELECT datetime_start FROM dat_files ' \
+                'WHERE id=(SELECT grav_dat_id FROM time_intersection ' \
+                f'WHERE id={id_val});'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+
+        record = cursor.fetchone()[0]
+        return datetime.strptime(record, '%Y-%m-%d %H:%M:%S')
+
+    def get_start_datetime_intersection_info_by_id(
+            self, id_val: int) -> datetime:
+        query = 'SELECT datetime_start FROM time_intersection ' \
+                f'WHERE id={id_val};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+
+        record = cursor.fetchone()[0]
+        return datetime.strptime(record, '%Y-%m-%d %H:%M:%S')
