@@ -188,9 +188,11 @@ class Processing:
                 line = '\t'.join((str(x) for x in record)) + '\n'
                 file_ctx.write(line)
 
-    def export_corrections(self):
-        chains_ids = self.dbase.get_all_chain_ids()
-        for chain_id_val in chains_ids:
+    def export_corrections(self, chain_ids: List[int] = []):
+        if not chain_ids:
+            chain_ids = self.dbase.get_all_chain_ids()
+
+        for chain_id_val in chain_ids:
             sensor_pairs = self.dbase.get_device_pairs_by_chain_id(chain_id_val)
             for gravimeter_id, seismometer_id in sensor_pairs:
                 chain_corrections = self.get_chain_corrections(
