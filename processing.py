@@ -36,7 +36,7 @@ def get_intersection_time(grav_time: datetime, seis_time: datetime,
 
 
 def get_correction_value(grav_ampl: float, energy_ratio: float) -> float:
-    return round(grav_ampl * energy_ratio ** 0.5, 4)
+    return round(grav_ampl * (1 - 1 / energy_ratio ** 0.5), 4)
 
 
 def format_correction_filename(
@@ -137,7 +137,7 @@ class Processing:
 
         corrections_list = []
         if not is_pair_exists:
-            measures_count = self.dbase.get_measures_count_by_link_id(link_id)
+            measures_count = self.dbase.get_gravity_measures_count_by_link_id(link_id)
             for i in range(measures_count):
                 corrections_list.append((session_index, i + 1, 0, 0))
         else:
