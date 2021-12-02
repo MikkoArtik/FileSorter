@@ -482,9 +482,21 @@ class SqliteDbase:
 
     def get_seismometer_number_by_id(self, seismometer_id: int) -> str:
         query = 'SELECT number FROM seismometers AS s ' \
-                f'WHERE s.id={seismometer_id};'
+            f'WHERE s.id={seismometer_id};'
 
         cursor = self.connection.cursor()
         cursor.execute(query)
         number = cursor.fetchone()[0]
         return number
+
+    def get_chain_ids_by_stations(self, stations: List[str]) -> List[int]:
+        stations_str = ', '.join((f'\'{x}\'' for x in stations))
+        query = 'SELECT DISTINCT l.chain_id FROM time_intersection AS ti' \
+            'JOIN dat_files AS df ON ti.grav_dat_id=df.id' \
+            'JOIN links AS l ON l.id=df.link_id' \
+            'WHERE df.station_id IN (SELECT id FROM stations as s ' \
+            f'WHERE name IN ({stations_str})) ORDER BY chain_id ASC;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        records = cursor.fetchall()
+        return [x[0] for x in records]
