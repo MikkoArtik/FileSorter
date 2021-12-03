@@ -104,16 +104,24 @@ class SqliteDbase:
         self.logger.info(f'seismometer: number={number} id={id_val}')
         return id_val
 
-    def add_station(self, name: str) -> int:
-        query = f'INSERT INTO stations(name) VALUES(\'{name}\');'
+    def add_station(self, name: str, x_wgs84=0., y_wgs84=0.) -> int:
         cursor = self.connection.cursor()
+        query = f'SELECT COUNT(1) FROM stations WHERE name=\'{name}\';'
+        cursor.execute(query)
+        record = cursor.fetchone()[0]
+        if not record:
+            query = f'INSERT INTO stations(name, xWGS84, yWGS84) ' \
+                    f'VALUES(\'{name}\', {x_wgs84}, {y_wgs84});'
+        else:
+            query = f'UPDATE stations SET xWGS84={x_wgs84}, ' \
+                    f'yWGS84={y_wgs84} WHERE name=\'{name}\';'
         try:
             cursor.execute(query)
             self.connection.commit()
-            self.logger.debug(f'insert new station with name {name} '
+            self.logger.debug(f'insert/update new station with name {name} '
                               'successful')
         except sqlite3.IntegrityError:
-            self.logger.error(f'insert new station with name {name} '
+            self.logger.error(f'insert/update new station with name {name} '
                               'failed')
 
         query = f'SELECT id FROM stations WHERE name=\'{name}\';'
