@@ -309,8 +309,8 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'Fail adding time intersection')
 
-    def get_time_intersections(self) -> List[Tuple[int, int, int, datetime,
-                                                   datetime]]:
+    def get_time_intersections(
+            self) -> List[Tuple[int, int, int, datetime, datetime]]:
         query = 'SELECT * FROM time_intersection WHERE seis_id IN ' \
                 '(SELECT id FROM good_seis_files);'
         cursor = self.connection.cursor()
@@ -339,9 +339,9 @@ class SqliteDbase:
             return record[0]
 
     def add_minute(self, time_intersection_id: int, minute_index: int) -> int:
-        query = 'INSERT INTO minutes_intersection(time_intersection_id, ' \
-                                                 'minute_index) VALUES (' \
-                f'{time_intersection_id}, {minute_index});'
+        query = 'INSERT INTO minutes_intersection(' \
+            'time_intersection_id, minute_index) ' \
+            f'VALUES ({time_intersection_id}, {minute_index});'
         try:
             self.connection.cursor().execute(query)
             self.connection.commit()
