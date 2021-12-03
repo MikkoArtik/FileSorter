@@ -6,12 +6,13 @@ from typing import List, NamedTuple, Tuple
 
 STRUCTURE = {
     'geometry': {
-        'filename': 'point_coords.csv',
+        'filepath': 'point_coords.csv',
         'columns': {
             'point_name': 0,
             'xWGS84': 2,
             'yWGS84': 3
-        }
+        },
+        'skip_rows': 1
     },
     'gravimetric': {
         'root': 'path'
@@ -42,6 +43,12 @@ class SeismicFileAttr(NamedTuple):
     name: str
     point: str
     sensor: str
+
+
+class CoordinateColumnIndexes(NamedTuple):
+    name: int
+    x: int
+    y: int
 
 
 def create_config_file(folder_path: str):
@@ -78,6 +85,17 @@ class ConfigFile:
     @property
     def seismic_extensions(self) -> List[str]:
         return self.data['seismic']['filename']['extensions']
+
+    @property
+    def coordinates_file_path(self) -> str:
+        return self.data['geometry']['filepath']
+
+    @property
+    def coordinates_file_columns(self) -> CoordinateColumnIndexes:
+        columns = self.data['geometry']['columns']
+        name_column = columns['point_name']
+        x_column, y_column = columns['xWGS84'], columns['yWGS84']
+        return CoordinateColumnIndexes(name_column, x_column, y_column)
 
     def is_seismic_file(self, filename: str) -> bool:
         extension = filename.split('.')[-1]
