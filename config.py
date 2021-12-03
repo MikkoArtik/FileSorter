@@ -5,17 +5,13 @@ from typing import List, NamedTuple, Tuple
 
 
 STRUCTURE = {
-    'log': {
-        'path': 'path',
+    'geometry': {
+        'filename': 'point_coords.csv',
         'columns': {
-            'date': 0,
-            'point': 1,
-            'seis_list': 2,
-            'grav_list': 3,
-            'is_bad': 5
-        },
-        'list_delimiter': ',',
-        'is_good_keyword': 'False'
+            'point_name': 0,
+            'xWGS84': 2,
+            'yWGS84': 3
+        }
     },
     'gravimetric': {
         'root': 'path'
