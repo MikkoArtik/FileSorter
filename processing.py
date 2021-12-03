@@ -35,6 +35,10 @@ def get_intersection_time(grav_time: datetime, seis_time: datetime,
     return result
 
 
+def get_full_energy(e_x: float, e_y: float, e_z: float) -> float:
+    return (e_x ** 2 + e_y ** 2 + e_z ** 2) ** 0.5
+
+
 def get_correction_value(grav_ampl: float, energy_ratio: float) -> float:
     return round(grav_ampl * (1 - 1 / energy_ratio ** 0.5), 4)
 
@@ -80,8 +84,9 @@ class Processing:
                      datetime_max: datetime,
                      split_seconds=60) -> List[List[float]]:
         self.logger.debug(f'Starting energy calculation for {seis_file_path}')
-        intervals_count = int(
-            (datetime_max - datetime_min).total_seconds() / split_seconds)
+
+        datetime_diff = datetime_max - datetime_min
+        intervals_count = int(datetime_diff.total_seconds() / split_seconds)
 
         bin_data = BinaryFile(seis_file_path, use_avg_values=True)
         f_min, f_max = self.config.get_bandpass_freqs()
@@ -95,14 +100,14 @@ class Processing:
             bin_data.read_date_time_start = left_datetime
             bin_data.read_date_time_stop = right_datetime
 
-            component_energy = []
+            components_energy = []
             for component in components:
                 signal = bin_data.read_signal(component)
                 spectrum_data = spectrum(signal, bin_data.resample_frequency)
                 energy_val = spectrum_energy(spectrum_data, (f_min, f_max))
-                component_energy.append(energy_val)
-            full_energy = (sum((x ** 2 for x in component_energy))) ** 0.5
-            all_energies = component_energy + [full_energy]
+                components_energy.append(energy_val)
+            full_energy = get_full_energy(*components_energy)
+            all_energies = components_energy + [full_energy]
             energies.append(all_energies)
 
         self.logger.debug(f'Energy calculation for {seis_file_path} finished')
@@ -127,9 +132,9 @@ class Processing:
             correction_value = get_correction_value(amplitude, energy_ratio)
             self.dbase.add_single_correction(minute_id, correction_value)
 
-    def get_link_corrections(
-            self, chain_id: int, link_id: int, gravimeter_id: int,
-            seismometer_id: int) -> List[Tuple[int, int, int, float]]:
+    def get_link_corrections(self, chain_id: int, link_id: int,
+                             gravimeter_id: int, seismometer_id: int) -> \
+            List[Tuple[int, int, int, float]]:
         is_pair_exists = self.dbase.is_sensor_pair_exists(
             chain_id, link_id, gravimeter_id, seismometer_id)
 
@@ -150,13 +155,13 @@ class Processing:
                 else:
                     correction_value = correction
                     is_bad = 0
-                corrections_list.append(
-                    (session_index, cycle_index, is_bad, correction_value))
+                item = (session_index, cycle_index, is_bad, correction_value)
+                corrections_list.append(item)
         return corrections_list
 
-    def get_chain_corrections(
-            self, chain_id: int, gravimeter_id: int,
-            seismometer_id: int) -> List[Tuple[int, int, int, float]]:
+    def get_chain_corrections(self, chain_id: int, gravimeter_id: int,
+                              seismometer_id: int) -> \
+            List[Tuple[int, int, int, float]]:
         if not self.dbase.is_chain_has_corrections(
                 chain_id, gravimeter_id, seismometer_id):
             return []
@@ -175,9 +180,8 @@ class Processing:
             return
         os.makedirs(path)
 
-    def save_corrections(
-            self, filename: str,
-            corrections: List[Tuple[int, int, int, float]]):
+    def save_corrections(self, filename: str,
+                         corrections: List[Tuple[int, int, int, float]]):
         self.create_export_corrections_folder()
 
         path = os.path.join(self.export_corrections_folder, filename)
@@ -196,8 +200,7 @@ class Processing:
             sensor_pairs = self.dbase.get_device_pairs_by_chain_id(chain_id_val)
             for gravimeter_id, seismometer_id in sensor_pairs:
                 chain_corrections = self.get_chain_corrections(
-                    chain_id_val, gravimeter_id, seismometer_id
-                )
+                    chain_id_val, gravimeter_id, seismometer_id)
 
                 if not chain_corrections:
                     continue
