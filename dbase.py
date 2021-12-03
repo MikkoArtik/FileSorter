@@ -542,8 +542,8 @@ class SqliteDbase:
         cursor.execute(query)
         return [x[0] for x in cursor.fetchall()]
 
-    def get_pre_plotting_data(
-            self) -> List[Tuple[str, str, str, str, str, int, str, str, str]]:
+    def get_pre_plotting_data(self) -> \
+            List[Tuple[int, str, str, str, str, str, int, str, str, str]]:
         query = 'SELECT * FROM pre_plotting;'
         cursor = self.connection.cursor()
         cursor.execute(query)
