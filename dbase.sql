@@ -137,7 +137,7 @@ g.datetime_stop AS grav_dt_stop, s.datetime_start AS seis_datetime_start,
 s.datetime_stop AS seis_datetime_stop
 FROM dat_files AS g JOIN seis_files AS s ON g.station_id = s.station_id AND
 MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
-JOIN good_seis_files as gsf ON s.id=gsf.id;
+JOIN good_seis_files AS gsf ON s.id=gsf.id;
 
 CREATE VIEW minimal_energy
 AS
@@ -180,28 +180,31 @@ JOIN seis_files AS sf ON ti.seis_id=sf.id;
 
 CREATE VIEW sensor_pairs
 AS
-SELECT distinct c.id as chain_id, l.id as link_id, df.gravimeter_id, sf.sensor_id as seismometer_id FROM chains as c
-LEFT JOIN links as l on c.id=l.chain_id
-LEFT JOIN dat_files as df ON df.link_id=l.id
-LEFT JOIN time_intersection as ti ON ti.grav_dat_id=df.id
+SELECT distinct c.id AS chain_id, l.id AS link_id, df.gravimeter_id, sf.sensor_id AS seismometer_id FROM chains AS c
+LEFT JOIN links AS l on c.id=l.chain_id
+LEFT JOIN dat_files AS df ON df.link_id=l.id
+LEFT JOIN time_intersection AS ti ON ti.grav_dat_id=df.id
 LEFT JOIN seis_files AS sf ON sf.id=ti.seis_id
 WHERE seismometer_id IS NOT NULL;
 
 CREATE VIEW post_correction
 AS
-SELECT l.chain_id, l.id as link_id, ti.id as time_intersection_id, s.id as seismometer_id, g.id as gravimeter_id, gm.id - (SELECT MIN(id) FROM gravity_measures as gm WHERE gm.dat_file_id=df.id) + 1 as cycle, c.seis_corr as seis_corr from links as l
-JOIN dat_files as df ON df.link_id=l.id
-JOIN gravimeters as g ON g.id=df.gravimeter_id
-JOIN gravity_measures as gm ON gm.dat_file_id=df.id
-LEFT JOIN time_intersection as ti ON ti.grav_dat_id=df.id
-LEFT JOIN minutes_intersection as mi ON mi.time_intersection_id=ti.id AND gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch')
-LEFT JOIN corrections as c ON c.minute_id=mi.id
+SELECT l.chain_id, l.id AS link_id, ti.id AS time_intersection_id, s.id AS seismometer_id, g.id AS gravimeter_id, gm.id - (SELECT MIN(id) FROM 
+gravity_measures AS gm WHERE gm.dat_file_id=df.id) + 1 AS cycle, c.seis_corr AS seis_corr from links AS l
+JOIN dat_files AS df ON df.link_id=l.id
+JOIN gravimeters AS g ON g.id=df.gravimeter_id
+JOIN gravity_measures AS gm ON gm.dat_file_id=df.id
+LEFT JOIN time_intersection AS ti ON ti.grav_dat_id=df.id
+LEFT JOIN minutes_intersection AS mi ON mi.time_intersection_id=ti.id AND gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch')
+LEFT JOIN corrections AS c ON c.minute_id=mi.id
 LEFT JOIN seis_files AS sf ON sf.id=ti.seis_id
 LEFT JOIN seismometers AS s ON s.id=sf.sensor_id
 ORDER BY chain_id ASC, l.link_id ASC, gm.id ASC, ti.id ASC;
 
 CREATE VIEW pre_plotting
 AS
-SELECT sp.chain_id, ti.id AS time_intersection_id, sp.gravimeter_id, sp.seismometer_id, ti.grav_dat_id AS dat_file_id, ti.seis_id AS seis_file_id FROM sensor_pairs AS sp
+SELECT sp.chain_id, ti.id AS time_intersection_id, sp.gravimeter_id, sp.seismometer_id, ti.grav_dat_id AS dat_file_id, tf.id AS tsf_file_id, ti.seis_id AS seis_file_id FROM sensor_pairs AS sp
 JOIN dat_files AS df ON sp.link_id=df.link_id
-JOIN time_intersection AS ti ON ti.grav_dat_id=df.id;
+JOIN time_intersection AS ti ON ti.grav_dat_id=df.id
+JOIN gravimeters AS g ON g.id=df.gravimeter_id
+LEFT JOIN tsf_files AS tf ON tf.dev_num_part=substr(g.number, -4) AND tf.datetime_start < df.datetime_stop AND df.datetime_stop <= tf.datetime_stop;
