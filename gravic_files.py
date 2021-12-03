@@ -10,6 +10,7 @@ DAT_EXTENSION = 'dat'
 
 DAT_FIRST_LINE_INDEX = 21
 TSF_FIRST_LINE_INDEX = 42
+TSF_SIGNAL_FREQUENCY = 10
 
 DAT_HEADER_FIRST_LINE = '/		CG-6 Survey'
 
@@ -57,6 +58,9 @@ class TSFile:
         datetime_src = list(map(int, line.split()[:6]))
         return datetime(*datetime_src)
 
+    def __get_signal_from_line(self, line: str) -> List[int]:
+        return list(map(int, line.split()[6: 16]))
+
     @property
     def device_num_part(self) -> str:
         return os.path.basename(self.path).split('_')[0]
@@ -67,7 +71,23 @@ class TSFile:
 
     @property
     def datetime_start(self) -> datetime:
-        return self.__get_datetime_from_line(self.__first_line)
+        return self.__get_datetime_from_line(self.__first_line) + \
+               timedelta(seconds=-1 + 1 / TSF_SIGNAL_FREQUENCY)
+
+    @property
+    def src_signal(self) -> List[Tuple[datetime, int]]:
+        with open(self.path) as file_ctx:
+            lines = [x.rstrip() for x in file_ctx if len(x.rstrip())]
+
+        signal = []
+        current_datetime = self.datetime_start
+        for line in lines[TSF_FIRST_LINE_INDEX:]:
+            one_second_signal = self.__get_signal_from_line(line)
+            for discrete in one_second_signal:
+                signal.append((current_datetime, discrete))
+                current_datetime += timedelta(
+                    seconds=1 / TSF_SIGNAL_FREQUENCY)
+        return signal
 
 
 class DATFile:
