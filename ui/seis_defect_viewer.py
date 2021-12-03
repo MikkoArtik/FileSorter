@@ -1,7 +1,7 @@
 import sys
 import os
 
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, NamedTuple
 
 import numpy as np
 
@@ -21,6 +21,15 @@ from dbase import SqliteDbase
 
 def get_lib_path() -> list:
     return [os.path.join(os.path.dirname(PyQt5.__file__), 'Qt5', 'plugins')]
+
+
+class FormData(NamedTuple):
+    filename: str
+    component: str
+    resample_freq: int
+    min_frequency: float
+    max_frequency: float
+    conclusion: str
 
 
 class MainWindow:
@@ -56,6 +65,17 @@ class MainWindow:
     def dbase(self) -> SqliteDbase:
         return self.__dbase
 
+    @property
+    def form_data(self) -> FormData:
+        filename = self.ui.cbFilesList.currentText()
+        component = self.ui.cbComponentList.currentText()
+        resample_freq = self.ui.sbResampleFreq.value()
+        f_min = self.ui.sbFMin.value()
+        f_max = self.ui.sbFMax.value()
+        conclusion = self.ui.cbConclusion.currentText()
+        return FormData(filename, component, resample_freq, f_min, f_max,
+                        conclusion)
+
     def get_files_list(self) -> Dict[str, Tuple[int, str, List[str]]]:
         records = self.dbase.get_seismic_files_for_checking()
         transform_data = dict()
@@ -77,8 +97,7 @@ class MainWindow:
         self.ui.cbFilesList.addItems(list(self.__files_info.keys()))
 
     def get_current_file_info(self) -> Tuple[int, str, List[str]]:
-        filename = self.ui.cbFilesList.currentText()
-        return self.__files_info[filename]
+        return self.__files_info[self.form_data.filename]
 
     def set_components_list(self):
         self.ui.cbComponentList.clear()
@@ -88,13 +107,15 @@ class MainWindow:
         self.ui.cbComponentList.addItems(components)
 
     def get_current_component(self) -> str:
-        return self.ui.cbComponentList.currentText()
+        return self.form_data.component
 
     def get_signal(self) -> Tuple[np.ndarray, int]:
         _, path, _ = self.get_current_file_info()
         component = self.get_current_component()
+        resample_freq = self.form_data.resample_freq
 
-        bin_data = BinaryFile(path, use_avg_values=True)
+        bin_data = BinaryFile(path, use_avg_values=True,
+                              resample_frequency=resample_freq)
         return bin_data.read_signal(component), bin_data.resample_frequency
 
     def plot_signal(self, signal: np.ndarray, frequency: int):
