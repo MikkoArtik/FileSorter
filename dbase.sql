@@ -203,8 +203,14 @@ ORDER BY chain_id ASC, l.link_id ASC, gm.id ASC, ti.id ASC;
 
 CREATE VIEW pre_plotting
 AS
-SELECT sp.chain_id, ti.id AS time_intersection_id, sp.gravimeter_id, sp.seismometer_id, ti.grav_dat_id AS dat_file_id, tf.id AS tsf_file_id, ti.seis_id AS seis_file_id FROM sensor_pairs AS sp
+SELECT ti.id AS time_intersection_id, substr(g.number, -4) AS grav_short_number, s.number AS seismometer_number, st.name AS station,
+       ti.datetime_start AS join_datetime_start, ti.datetime_stop AS join_datetime_stop,
+       ROUND((strftime('%s', ti.datetime_start) - strftime('%s', df.datetime_start)) / 60) AS skip_minutes,
+       df.path AS dat_path, tf.path AS tsf_path, sf.path  AS seis_file_path FROM sensor_pairs AS sp
+JOIN seismometers AS s ON s.id=sp.seismometer_id
 JOIN dat_files AS df ON sp.link_id=df.link_id
-JOIN time_intersection AS ti ON ti.grav_dat_id=df.id
 JOIN gravimeters AS g ON g.id=df.gravimeter_id
-LEFT JOIN tsf_files AS tf ON tf.dev_num_part=substr(g.number, -4) AND tf.datetime_start < df.datetime_stop AND df.datetime_stop <= tf.datetime_stop;
+JOIN stations AS st ON st.id=df.station_id
+JOIN time_intersection AS ti ON ti.grav_dat_id=df.id
+LEFT JOIN seis_files AS sf ON sf.id=ti.seis_id
+LEFT JOIN tsf_files AS tf ON tf.dev_num_part=substr(g.number, -4) AND tf.datetime_start < df.datetime_stop AND df.datetime_stop <= tf.datetime_stop
