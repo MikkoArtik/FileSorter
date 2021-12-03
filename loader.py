@@ -5,6 +5,7 @@ from seiscore import BinaryFile
 from seiscore.binaryfile.binaryfile import BadHeaderData
 
 from gravic_files import DATFile, TSFile, ChainFile
+from coordinates_file import CoordinatesFile
 
 from dbase import SqliteDbase
 from config import ConfigFile
@@ -116,8 +117,20 @@ class Loader:
                 self.logger.debug(f'Seismic file {path} added')
         self.logger.debug('Loading seismic files finished')
 
+    def load_point_coordinates(self):
+        self.logger.debug('Loading points coordinates...')
+        file_path = self.config_file.coordinates_file_path
+        columns = self.config_file.coordinates_file_columns
+        skip_rows = self.config_file.data['geometry']['skip_rows']
+        coords_file = CoordinatesFile(file_path, columns.name, columns.x,
+                                     columns.y, skip_rows)
+        for point_name, coords in coords_file.coordinates_as_dict.items():
+            x_wgs84, y_wgs84 = coords
+            self.dbase.add_station(point_name, x_wgs84, y_wgs84)
+
     def run(self):
         self.load_chain_files()
         self.load_dat_files()
         self.load_tsf_files()
         self.load_seismic_files()
+        self.load_point_coordinates()
