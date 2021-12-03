@@ -1,5 +1,6 @@
 from typing import NamedTuple, List, Dict, Tuple
 import csv
+import os
 
 
 class Coordinate(NamedTuple):
@@ -11,6 +12,9 @@ class Coordinate(NamedTuple):
 class CoordinatesFile:
     def __init__(self, path: str, name_column: int, x_wgs84_column: int,
                  y_wgs84_column: int, skip_rows: int):
+        if not os.path.exists(path):
+            raise OSError
+
         self.__path = path
         self.name_column = name_column
         self.x_wgs84_column = x_wgs84_column
