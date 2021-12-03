@@ -562,3 +562,9 @@ class SqliteDbase:
 
         record = cursor.fetchone()[0]
         return datetime.strptime(record, '%Y-%m-%d %H:%M:%S')
+
+    def get_tsf_file_path_by_id(self, id_val: int) -> str:
+        query = f'SELECT path FROM tsf_files WHERE id={id_val};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchone()[0]
