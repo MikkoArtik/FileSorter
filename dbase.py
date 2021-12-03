@@ -542,29 +542,9 @@ class SqliteDbase:
         cursor.execute(query)
         return [x[0] for x in cursor.fetchall()]
 
-    def get_start_datetime_gravity_measures_by_time_intersection_id(
-            self, id_val: int) -> datetime:
-        query = 'SELECT datetime_start FROM dat_files ' \
-                'WHERE id=(SELECT grav_dat_id FROM time_intersection ' \
-                f'WHERE id={id_val});'
+    def get_pre_plotting_data(
+            self) -> List[Tuple[str, str, str, str, str, int, str, str, str]]:
+        query = 'SELECT * FROM pre_plotting;'
         cursor = self.connection.cursor()
         cursor.execute(query)
-
-        record = cursor.fetchone()[0]
-        return datetime.strptime(record, '%Y-%m-%d %H:%M:%S')
-
-    def get_start_datetime_intersection_info_by_id(
-            self, id_val: int) -> datetime:
-        query = 'SELECT datetime_start FROM time_intersection ' \
-                f'WHERE id={id_val};'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-
-        record = cursor.fetchone()[0]
-        return datetime.strptime(record, '%Y-%m-%d %H:%M:%S')
-
-    def get_tsf_file_path_by_id(self, id_val: int) -> str:
-        query = f'SELECT path FROM tsf_files WHERE id={id_val};'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        return cursor.fetchone()[0]
+        return cursor.fetchall()
