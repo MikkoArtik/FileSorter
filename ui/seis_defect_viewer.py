@@ -162,6 +162,10 @@ class MainWindow:
 
     def update_lists(self):
         self.__files_info = self.get_files_list()
+        if not self.__files_info:
+            self.ui.statusBar.showMessage('Все файлы уже отбракованы')
+            return
+
         self.set_files_list()
         self.set_components_list()
 
