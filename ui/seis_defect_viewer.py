@@ -43,8 +43,11 @@ class MainWindow:
         self.__ui.cbFilesList.currentTextChanged.connect(self.show_signal_data)
         self.__ui.cbComponentList.currentTextChanged.connect(self.show_signal_data)
         self.__ui.bSave.clicked.connect(self.save_checking_conclusion)
+        self.__ui.sbFMin.valueChanged.connect(self.set_spectrogram_y_limits)
+        self.__ui.sbFMax.valueChanged.connect(self.set_spectrogram_y_limits)
 
         self.__files_info = None
+        self.__spectrogram_plot = None
         self.update_lists()
 
         self.show_signal_data()
@@ -106,6 +109,13 @@ class MainWindow:
         components = file_info[-1]
         self.ui.cbComponentList.addItems(components)
 
+    def set_spectrogram_y_limits(self):
+        if not self.__spectrogram_plot:
+            return
+        f_min = self.form_data.min_frequency
+        f_max = self.form_data.max_frequency
+        self.__spectrogram_plot.setRange(yRange=(f_min, f_max))
+
     def get_current_component(self) -> str:
         return self.form_data.component
 
@@ -162,6 +172,8 @@ class MainWindow:
              })
         hist.setImageItem(img)
         plot.addItem(img)
+        self.__spectrogram_plot = plot
+        self.set_spectrogram_y_limits()
 
     def show_signal_data(self):
         if not self.get_current_component():
