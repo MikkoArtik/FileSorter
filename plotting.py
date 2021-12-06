@@ -13,7 +13,20 @@ from seiscore.functions.filter import band_pass_filter
 
 from config import ConfigFile
 from dbase import SqliteDbase
-from gravic_files import TSFile
+from gravic_files import TSFile, DATFile, Measure
+
+
+class PrePlottingData(NamedTuple):
+    time_intersection_id: int
+    grav_short_number: str
+    seis_number: str
+    station: str
+    join_dt_start: datetime
+    join_dt_stop: datetime
+    skip_minutes: int
+    grav_dat_path: str
+    grav_tsf_path: str
+    seis_path: str
 
 
 class GravityData(NamedTuple):
@@ -91,15 +104,15 @@ class Plot:
             '(Z-компонента)', fontname='Times New Roman')
         x = subplot
         subplot.plot(x, seis_energy_z, color='mediumblue',
-                    alpha=1, linewidth=1.5,
-                    label='Поминутное значение энергии')
+                     alpha=1, linewidth=1.5,
+                     label='Поминутное значение энергии')
 
         min_z_energy = min(seis_energy_z)
         seis_level_line = [(x[0], x[-1]), [min_z_energy] * 2]
         subplot.plot(*seis_level_line, color='seagreen',
-                    alpha=0.5, linewidth=1.5,
-                    label='Сейсмически тихий уровень',
-                    linestyle='dashed')
+                     alpha=0.5, linewidth=1.5,
+                     label='Сейсмически тихий уровень',
+                     linestyle='dashed')
         subplot.set_xlim(x[0], x[-1])
         axs[1].grid(which='major', color='k', alpha=0.2)
         axs[1].xaxis.set_major_locator(ticker.MultipleLocator(1))
@@ -196,6 +209,88 @@ def create_signals_plot(grav_signal: List[Tuple[datetime, float]],
     plt.show()
 
 
+class Plotter:
+    def __init__(self, config_file_path: str):
+        if not os.path.exists(config_file_path):
+            raise OSError
+
+        self.config = ConfigFile(config_file_path)
+        self.dbase = SqliteDbase(self.config.export_root)
+        self.logger = logging.getLogger('Plotting')
+
+        self.current_pre_plotting_data = self.get_current_pre_plotting_data()
+
+    @property
+    def pre_plotting_data(self) -> PrePlottingData:
+        for record in self.dbase.get_pre_plotting_data():
+            time_intersection_id = record[0]
+            grav_short_num, seis_num, station = record[1: 4]
+            join_dt_start = datetime.strptime(record[4], '%Y-%m-%d %H:%M:%S')
+            join_dt_stop = datetime.strptime(record[5], '%Y-%m-%d %H:%M:%S')
+            skip_minutes = record[6]
+            grav_dat_path, grav_tsf_path, seis_path = record[7: 10]
+            yield PrePlottingData(time_intersection_id, grav_short_num,
+                                  seis_num, station, join_dt_start,
+                                  join_dt_stop, skip_minutes,
+                                  grav_dat_path, grav_tsf_path, seis_path)
+
+    def get_current_pre_plotting_data(self) -> PrePlottingData:
+        return next(self.pre_plotting_data)
+
+    @property
+    def grav_tsf_signal(self) -> List[Tuple[datetime, float]]:
+        tsf = TSFile(self.current_pre_plotting_data.grav_tsf_path)
+        return tsf.src_signal
+
+    @property
+    def grav_src_minutes_signal(self) -> List[Measure]:
+        dat = DATFile(self.current_pre_plotting_data.grav_dat_path)
+        return dat.extract_all_measures()
+
+    @property
+    def seis_corrections(self) -> List[float]:
+        ti_id = self.current_pre_plotting_data.time_intersection_id
+        skip_minutes = self.current_pre_plotting_data.skip_minutes
+        corrections_vals = \
+            self.dbase.get_seis_corrections_by_time_intersection_id(ti_id)
+        return [0.] * skip_minutes + corrections_vals
+
+    @property
+    def grav_corr_minutes_signal(self) -> List[Measure]:
+        corrected_signal = []
+        corrections = self.seis_corrections
+        for i, measure in enumerate(self.grav_src_minutes_signal):
+            corrected_val = measure.corr_grav_value + corrections[i]
+            corr_measure = Measure(measure.datetime_val, corrected_val)
+            corrected_signal.append(corr_measure)
+        return corrected_signal
+
+    @property
+    def seis_energy(self) -> List[float]:
+        ti_id = self.current_pre_plotting_data.time_intersection_id
+        skip_minutes = self.current_pre_plotting_data.skip_minutes
+        energy_vals = self.dbase.get_seis_energy_by_time_intersection_id(ti_id)
+        z_energy = [x[2] for x in energy_vals]
+        return [0.] * skip_minutes + z_energy
+
+    @property
+    def seis_z_signal(self) -> List[Tuple[datetime, int]]:
+        extract_signal = []
+        path = self.current_pre_plotting_data.seis_path
+        bin_data = BinaryFile(path, 0, True)
+        z_signal = bin_data.read_signal('Z')
+
+        freq_lim = self.config.get_bandpass_freqs()
+        filter_z_signal = band_pass_filter(z_signal,
+                                           bin_data.resample_frequency,
+                                           *freq_lim)
+        for i in range(z_signal.shape[0]):
+            datetime_val = bin_data.read_date_time_start + timedelta(
+                seconds=i / bin_data.resample_frequency)
+            extract_signal.append((datetime_val, filter_z_signal[i]))
+        return extract_signal
+
+
 class Plotting:
     def __init__(self, config_file_path: str):
         if not os.path.exists(config_file_path):
@@ -231,7 +326,8 @@ class Plotting:
             self.dbase.get_start_datetime_gravity_measures_by_time_intersection_id(
                 time_intersection_id)
         intersection_dt_start = \
-            self.dbase.get_start_datetime_intersection_info_by_id(time_intersection_id)
+            self.dbase.get_start_datetime_intersection_info_by_id(
+                time_intersection_id)
 
         skip_minutes_count = int(
             (intersection_dt_start - grav_dt_start).total_seconds() / 60)
@@ -251,7 +347,8 @@ class Plotting:
 
     def run(self):
         grav_dt_start = \
-            self.dbase.get_start_datetime_gravity_measures_by_time_intersection_id(97)
+            self.dbase.get_start_datetime_gravity_measures_by_time_intersection_id(
+                97)
         intersection_dt_start = \
             self.dbase.get_start_datetime_intersection_info_by_id(97)
 
@@ -291,14 +388,11 @@ class Plotting:
         pass
 
 
-
-
-
-
 if __name__ == '__main__':
     conf_file = '/media/michael/Data/Projects/GraviSeismicComparation' \
                 '/ZapolarnoeDeposit/2021/config.json'
     logging.basicConfig(level=logging.DEBUG)
     p = Plotting(conf_file)
     p.run()
+    p.run2()
     p.run2()
