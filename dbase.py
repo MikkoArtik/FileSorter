@@ -188,10 +188,10 @@ class SqliteDbase:
             cursor.execute(query)
         self.connection.commit()
 
-    def add_tsf_file(self, dev_num_part: str, datetime_start: datetime,
-                     datetime_stop: datetime, path: str):
-        query = 'INSERT INTO tsf_files(dev_num_part, datetime_start, ' \
-                                      'datetime_stop, path) ' \
+    def add_grav_tsf_file(self, dev_num_part: str, datetime_start: datetime,
+                          datetime_stop: datetime, path: str):
+        query = 'INSERT INTO grav_tsf_files(dev_num_part, datetime_start, ' \
+                                           'datetime_stop, path) ' \
                 f'VALUES (\'{dev_num_part}\', \'{datetime_start}\', ' \
                 f'\'{datetime_stop}\', \'{path}\')'
         try:
@@ -200,6 +200,25 @@ class SqliteDbase:
             self.logger.debug(f'TSF-file with path {path} added successful')
         except sqlite3.IntegrityError:
             self.logger.error(f'TSF-file with path {path} not add')
+
+    def get_id_grav_tsf_file_by_path(self, path: str) -> int:
+        query = f'SELECT id FROM grav_tsf_files WHERE path=\'{path}\';'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def add_gravity_second_measures(self, tsf_file_id: int,
+                                    measures: List[Tuple[datetime, int]]):
+        query_template = 'INSERT INTO gravity_measures_seconds (' \
+                'grav_tsf_file_id, datetime_val, src_value) VALUES ' \
+                '({tsf_file_id}, \'{datetime_val}\', {src_value});'
+        cursor = self.connection.cursor()
+        for datetime_val, src_value in measures:
+            query = query_template.format(tsf_file_id=tsf_file_id,
+                                          datetime_val=datetime_val,
+                                          src_value=src_value)
+            cursor.execute(query)
+        self.connection.commit()
 
     def add_seis_file(self, sensor: str, station: str,
                       datetime_start: datetime, datetime_stop: datetime,
