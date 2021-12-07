@@ -140,6 +140,13 @@ FROM seis_files AS sf
 JOIN seis_files_defect_info AS di ON sf.id=di.seis_id
 WHERE di.x_channel NOT IN ('Bad', 'Unknown') AND di.y_channel NOT IN ('Bad', 'Unknown') AND di.z_channel NOT IN ('Bad', 'Unknown');
 
+CREATE VIEW grav_defect_input_preparing
+AS
+SELECT gdf.id as grav_dat_file_id, l.link_index, c.cycle_path FROM links AS l
+LEFT JOIN grav_dat_files AS gdf ON l.filename=gdf.filename
+LEFT JOIN chains AS c ON c.id=l.chain_id;
+
+
 CREATE VIEW grav_seis_times
 AS
 SELECT g.id AS grav_id, s.id AS seis_id, g.datetime_start AS grav_dt_start,
