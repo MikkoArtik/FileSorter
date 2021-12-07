@@ -4,7 +4,8 @@ import logging
 from seiscore import BinaryFile
 from seiscore.binaryfile.binaryfile import BadHeaderData
 
-from gravic_files import DATFile, TSFile, ChainFile
+from gravic_files import DATFile, TSFile, ChainFile, CycleFile
+from gravic_files import generate_cycle_filename_by_chain_filename
 from coordinates_file import CoordinatesFile
 
 from dbase import SqliteDbase
@@ -22,23 +23,33 @@ class Loader:
         self.seismic_root = self.config_file.seismic_root
         self.logger = logging.getLogger('Loader')
 
-    def load_chain_files(self):
+    def load_chain_cycle_files(self):
         self.logger.debug('Loading chains...')
         for root, _, files in os.walk(self.gravimetric_root):
             for filename in files:
-                path = os.path.join(root, filename)
-                self.logger.debug(f'Start loading file {path}...')
+                chain_path = os.path.join(root, filename)
+                self.logger.debug(f'Start loading file {chain_path}...')
                 try:
-                    chain_file = ChainFile(path)
+                    chain_file = ChainFile(chain_path)
                 except (OSError, RuntimeError):
-                    self.logger.debug(f'File {path} skipped')
+                    self.logger.debug(f'File {chain_path} skipped')
+                    continue
+
+                cycle_filename = generate_cycle_filename_by_chain_filename(
+                    filename)
+                cycle_path = os.path.join(root, cycle_filename)
+                try:
+                    _ = CycleFile(cycle_path)
+                except (OSError, RuntimeError):
+                    self.logger.debug(f'File {chain_path} skipped - '
+                                      f'cycle file not found')
                     continue
 
                 chain_id = self.dbase.add_chain(chain_file.sensor_part_name,
-                                                path)
+                                                chain_path, cycle_path)
                 for link_file, link_id in chain_file.links.items():
                     self.dbase.add_link(chain_id, link_id, link_file)
-                self.logger.debug(f'Chain info from file {path} added')
+                self.logger.debug(f'Chain info from file {chain_path} added')
         self.logger.debug('Loading chains finished')
 
     def load_gravity_minute_measures(self, dat_file: DATFile):
@@ -136,7 +147,7 @@ class Loader:
             self.dbase.add_station(point_name, x_wgs84, y_wgs84)
 
     def run(self):
-        self.load_chain_files()
+        self.load_chain_cycle_files()
         self.load_dat_files()
         self.load_tsf_files()
         self.load_seismic_files()
