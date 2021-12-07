@@ -101,7 +101,8 @@ CREATE TABLE grav_seis_time_intersections(
 
 CREATE TABLE seis_energy(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    minute_id INTEGER NOT NULL,
+    time_intersection_id INTEGER NOT NULL,
+    minute_index INTEGER NOT NULL,
     Ex REAL NOT NULL DEFAULT 0,
     Ey REAL NOT NULL DEFAULT 0,
     Ez REAL NOT NULL DEFAULT 0,
