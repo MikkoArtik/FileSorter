@@ -190,7 +190,7 @@ class MainWindow:
         component = self.ui.cbComponentList.currentText()
         conclusion = self.ui.cbConclusion.currentText()
         file_id = self.__files_info[filename][0]
-        self.dbase.update_file_checking(file_id, component, conclusion)
+        self.dbase.update_seis_file_checking_status(file_id, component, conclusion)
         self.update_lists()
 
     def update_lists(self):
