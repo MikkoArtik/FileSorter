@@ -163,5 +163,6 @@ class Loader:
         self.load_chain_cycle_files()
         self.load_dat_files()
         self.load_tsf_files()
+        self.load_gravity_defect_markers()
         self.load_seismic_files()
         self.load_station_coordinates()
