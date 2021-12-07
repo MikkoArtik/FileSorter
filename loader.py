@@ -124,7 +124,7 @@ class Loader:
                 self.logger.debug(f'Seismic file {path} added')
         self.logger.debug('Loading seismic files finished')
 
-    def load_point_coordinates(self):
+    def load_station_coordinates(self):
         self.logger.debug('Loading points coordinates...')
         file_path = self.config_file.coordinates_file_path
         columns = self.config_file.coordinates_file_columns
@@ -140,4 +140,4 @@ class Loader:
         self.load_dat_files()
         self.load_tsf_files()
         self.load_seismic_files()
-        self.load_point_coordinates()
+        self.load_station_coordinates()
