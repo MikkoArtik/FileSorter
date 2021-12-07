@@ -130,29 +130,20 @@ class SqliteDbase:
         self.logger.info(f'station: name={name} id={id_val}')
         return id_val
 
-    def get_link_id(self, filename: str) -> Union[None, int]:
-        query = f'SELECT id FROM links WHERE filename=\'{filename}\';'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        records = cursor.fetchone()
-        if not records:
-            self.logger.debug(f'link id for filename {filename} not found')
-            return None
-        id_val = records[0]
-        self.logger.info(f'link: filename={filename} id={id_val}')
-        return id_val
-
-    def change_link_status(self, link_id: int, is_exist=True):
+    def change_link_status(self, grav_dat_filename: str, is_exist=True):
         query = f'UPDATE links SET is_exist={int(is_exist)} ' \
-                f'WHERE id={link_id};'
+                f'WHERE filename=\'{grav_dat_filename}\';'
         cursor = self.connection.cursor()
         try:
             cursor.execute(query)
             self.connection.commit()
-            self.logger.debug(f'status for link with id {link_id} changed '
-                              f'to {is_exist}')
+            self.logger.debug(
+                f'status for link with filename={grav_dat_filename} changed '
+                f'to {is_exist}')
         except sqlite3.IntegrityError:
-            self.logger.error(f'status for link with id {link_id} not change')
+            self.logger.error(
+                f'status for link with filename={grav_dat_filename} '
+                'not change')
 
     def get_id_grav_dat_file_by_path(self, path: str) -> Union[int, None]:
         query = f'SELECT id FROM grav_dat_files WHERE path=\'{path}\''
