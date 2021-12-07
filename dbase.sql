@@ -43,6 +43,16 @@ CREATE TABLE grav_dat_files(
     FOREIGN KEY(station_id) REFERENCES stations(id)
 );
 
+CREATE TABLE gravity_measures_minutes(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grav_dat_file_id INTEGER NOT NULL,
+    datetime_val DATETIME NOT NULL,
+    corr_grav REAL NOT NULL DEFAULT 0,
+    is_bad INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(grav_dat_file_id, datetime_val),
+    FOREIGN KEY (grav_dat_file_id) REFERENCES grav_dat_files(id) ON DELETE CASCADE
+);
+
 CREATE TABLE tsf_files(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     dev_num_part VARCHAR(10) NOT NULL,
@@ -50,15 +60,7 @@ CREATE TABLE tsf_files(
     datetime_stop DATETIME NOT NULL,
     path TEXT UNIQUE NOT NULL);
 
-CREATE TABLE gravity_measures(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dat_file_id INTEGER NOT NULL,
-    datetime_val DATETIME NOT NULL,
-    corr_grav REAL NOT NULL DEFAULT 0,
-    is_bad INTEGER NOT NULL DEFAULT 0,
-    UNIQUE(dat_file_id, datetime_val),
-    FOREIGN KEY (dat_file_id) REFERENCES dat_files(id) ON DELETE CASCADE
-);
+
 
 CREATE TABLE seis_files(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
