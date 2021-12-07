@@ -146,6 +146,19 @@ class Loader:
             x_wgs84, y_wgs84 = coords
             self.dbase.add_station(point_name, x_wgs84, y_wgs84)
 
+    def load_gravity_defect_markers(self):
+        self.logger.debug('Loading gravity defect markers...')
+        preparing_data = self.dbase.get_grav_defect_input_preparing()
+        for record in preparing_data:
+            grav_dat_file_id, link_index, cycle_filepath = record
+            cycle_file = CycleFile(cycle_filepath)
+            defect_markers = cycle_file.defects.get(link_index, None)
+            if not defect_markers:
+                continue
+
+            self.dbase.update_grav_defect_markers(grav_dat_file_id,
+                                                  defect_markers)
+
     def run(self):
         self.load_chain_cycle_files()
         self.load_dat_files()
