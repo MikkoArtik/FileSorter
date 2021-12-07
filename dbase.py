@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
-from typing import Union, List, Tuple, NamedTuple
+from typing import Union, List, Tuple, Dict
 import logging
 
 
@@ -220,6 +220,30 @@ class SqliteDbase:
                                           datetime_val=datetime_val,
                                           src_value=src_value)
             cursor.execute(query)
+        self.connection.commit()
+
+    def get_grav_defect_input_preparing(self) -> List[Tuple[int, int, str]]:
+        query = 'SELECT * FROM grav_defect_input_preparing;'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def update_grav_defect_marker(self, grav_dat_file_id: int,
+                                  cycle_index: int, is_bad: bool):
+        is_bad_val = 1 if is_bad else 0
+        query = f'UPDATE gravity_measures_minutes SET is_bad={is_bad_val} ' \
+            f'WHERE grav_dat_file_id={grav_dat_file_id} AND ' \
+            f'datetime_val=datetime(strftime(\'%s\', ' \
+                f'(SELECT datetime_start FROM grav_dat_files ' \
+                f'WHERE id={grav_dat_file_id}))+ {cycle_index} * 60,' \
+                f'\'unixepoch\');'
+        self.connection.cursor().execute(query)
+
+    def update_grav_defect_markers(self, grav_dat_file_id: int,
+                                   markers: Dict[int, bool]):
+        for cycle_index, is_bad in markers.items():
+            self.update_grav_defect_marker(grav_dat_file_id, cycle_index,
+                                           is_bad)
         self.connection.commit()
 
     def add_seis_file(self, sensor: str, station: str,
