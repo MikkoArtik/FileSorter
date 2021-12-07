@@ -89,7 +89,7 @@ CREATE TABLE seis_files_defect_info(
     FOREIGN KEY (seis_id) REFERENCES seis_files(id)
 );
 
-CREATE TABLE time_intersection(
+CREATE TABLE grav_seis_time_intersections(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     grav_dat_id INTEGER NOT NULL,
     seis_id INTEGER NOT NULL,
