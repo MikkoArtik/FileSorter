@@ -75,7 +75,7 @@ class TSFile:
                timedelta(seconds=-1 + 1 / TSF_SIGNAL_FREQUENCY)
 
     @property
-    def src_signal(self) -> List[Tuple[datetime, int]]:
+    def src_signal(self) -> List[Measure]:
         with open(self.path) as file_ctx:
             lines = [x.rstrip() for x in file_ctx if len(x.rstrip())]
 
@@ -84,7 +84,8 @@ class TSFile:
         for line in lines[TSF_FIRST_LINE_INDEX:]:
             one_second_signal = self.__get_signal_from_line(line)
             for discrete in one_second_signal:
-                signal.append((current_datetime, discrete))
+                measure = Measure(current_datetime, discrete)
+                signal.append(measure)
                 current_datetime += timedelta(
                     seconds=1 / TSF_SIGNAL_FREQUENCY)
         return signal
