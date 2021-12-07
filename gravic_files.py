@@ -7,12 +7,14 @@ import os
 CHAIN_EXTENSION = 'txt'
 TSF_EXTENSION = 'tsf'
 DAT_EXTENSION = 'dat'
+CYCLE_EXTENSION = 'txt'
 
 DAT_FIRST_LINE_INDEX = 21
 TSF_FIRST_LINE_INDEX = 42
 TSF_SIGNAL_FREQUENCY = 10
 
 DAT_HEADER_FIRST_LINE = '/		CG-6 Survey'
+CYCLE_HEADER_FIRST_LINE = 'seans\tcycle\tzabrak\tpopravka'
 
 
 class Measure(NamedTuple):
@@ -20,10 +22,16 @@ class Measure(NamedTuple):
     corr_grav_value: float
 
 
-def is_dat_file(path: str):
+def is_dat_file(path: str) -> bool:
     with open(path) as file_ctx:
         first_line = file_ctx.readline().rstrip()
         return first_line == DAT_HEADER_FIRST_LINE
+
+
+def is_cycle_file(path: str) -> bool:
+    with open(path) as file_ctx:
+        first_line = file_ctx.readline().rstrip()
+        return first_line == CYCLE_HEADER_FIRST_LINE
 
 
 def is_good_measures_data(measures: List[Measure]) -> bool:
@@ -35,6 +43,11 @@ def is_good_measures_data(measures: List[Measure]) -> bool:
             return False
     else:
         return True
+
+
+def generate_cycle_filename_by_chain_filename(filename: str) -> str:
+    base_name = filename.split('.')[0]
+    return base_name + '_cycles.' + CYCLE_EXTENSION
 
 
 class TSFile:
@@ -196,3 +209,33 @@ class ChainFile:
     @property
     def sensor_part_name(self) -> str:
         return os.path.basename(self.path).split('.')[0].split('_')[1]
+
+
+class CycleFile:
+    def __init__(self, path: str):
+        if not os.path.exists(path):
+            raise OSError
+
+        extension = os.path.basename(path).split('.')[-1]
+        if extension != CYCLE_EXTENSION:
+            raise OSError(f'File is not {CYCLE_EXTENSION} file')
+
+        if not is_cycle_file(path):
+            raise RuntimeError('File is not chain file')
+
+        self.path = path
+        self.defects = self.__load_defect_markers()
+
+    def __load_defect_markers(self) -> Dict[int, Dict[int, int]]:
+        defects = {}
+        with open(self.path) as file_ctx:
+            next(file_ctx)
+            for line in file_ctx:
+                tmp_arr = line.rstrip().split('\t')
+                session = int(tmp_arr[0])
+                cycle_index, is_bad = int(tmp_arr[1]), int(tmp_arr[2])
+                if session not in defects:
+                    defects[session] = {cycle_index: is_bad}
+                else:
+                    defects[session][cycle_index] = is_bad
+        return defects
