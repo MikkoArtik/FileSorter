@@ -56,6 +56,7 @@ CREATE TABLE gravity_measures(
     dat_file_id INTEGER NOT NULL,
     datetime_val DATETIME NOT NULL,
     corr_grav REAL NOT NULL DEFAULT 0,
+    is_bad INTEGER NOT NULL DEFAULT 0,
     UNIQUE(dat_file_id, datetime_val),
     FOREIGN KEY (dat_file_id) REFERENCES dat_files(id) ON DELETE CASCADE
 );
