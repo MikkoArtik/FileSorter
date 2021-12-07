@@ -36,20 +36,22 @@ class SqliteDbase:
         cursor.close()
         return connection
 
-    def add_chain(self, sensor_part_name: str, path: str) -> int:
-        query = 'INSERT INTO chains(dev_num_part, path) ' \
-                f'VALUES (\'{sensor_part_name}\', \'{path}\')'
+    def add_chain(self, sensor_part_name: str,
+                  chain_path: str, cycle_path: str) -> int:
+        query = 'INSERT INTO chains(dev_num_part, chain_path, cycle_path) ' \
+                f'VALUES (\'{sensor_part_name}\', \'{chain_path}\', ' \
+                f'\'{cycle_path}\')'
         cursor = self.connection.cursor()
         try:
             cursor.execute(query)
             self.connection.commit()
-            self.logger.debug(f'insert new chain with path {path} successful')
+            self.logger.debug(f'insert new chain with path {chain_path} successful')
         except sqlite3.IntegrityError:
-            self.logger.error(f'insert new chain with path {path} failed')
+            self.logger.error(f'insert new chain with path {chain_path} failed')
 
-        query = f'SELECT id FROM chains WHERE path=\'{path}\''
+        query = f'SELECT id FROM chains WHERE chain_path=\'{chain_path}\''
         id_val = cursor.execute(query).fetchone()[0]
-        self.logger.info(f'chain: path={path} '
+        self.logger.info(f'chain: path={chain_path} '
                          f'sensor_part_name={sensor_part_name} id={id_val}')
         return id_val
 
