@@ -41,7 +41,7 @@ class Loader:
                 self.logger.debug(f'Chain info from file {path} added')
         self.logger.debug('Loading chains finished')
 
-    def load_gravity_measures(self, dat_file: DATFile):
+    def load_gravity_minute_measures(self, dat_file: DATFile):
         id_val = self.dbase.get_id_grav_dat_file_by_path(dat_file.path)
         if not id_val:
             return
@@ -70,9 +70,9 @@ class Loader:
                                              dat_file.station,
                                              dat_file.datetime_start,
                                              dat_file.datetime_stop, path)
-                self.dbase.change_link_status(filename, True)
 
-                self.load_gravity_measures(dat_file)
+                self.dbase.change_link_status(filename, True)
+                self.load_gravity_minute_measures(dat_file)
                 self.logger.debug(f'DAT-file {path} added')
         self.logger.debug('Loading dat-files finished')
 
