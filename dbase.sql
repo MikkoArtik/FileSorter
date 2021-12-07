@@ -18,7 +18,8 @@ CREATE TABLE stations(
 CREATE TABLE chains(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     dev_num_part VARCHAR(10) NOT NULL,
-    path TEXT UNIQUE NOT NULL
+    chain_path TEXT UNIQUE NOT NULL,
+    cycle_path TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE links(
