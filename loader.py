@@ -45,9 +45,13 @@ class Loader:
         id_val = self.dbase.get_id_grav_dat_file_by_path(dat_file.path)
         if not id_val:
             return
-        for measure in dat_file.measures:
-            self.dbase.add_gravity_measure(id_val, measure.datetime_val,
-                                           measure.corr_grav_value)
+        self.dbase.add_gravity_minute_measures(id_val, dat_file.measures)
+
+    def load_gravity_second_measures(self, tsf_file: TSFile):
+        id_val = self.dbase.get_id_grav_tsf_file_by_path(tsf_file.path)
+        if not id_val:
+            return
+        self.dbase.add_gravity_second_measures(id_val, tsf_file.src_signal)
 
     def load_dat_files(self):
         self.logger.debug('Loading dat-files...')
@@ -86,10 +90,12 @@ class Loader:
                     tsf_file = TSFile(path)
                 except OSError:
                     continue
-                self.dbase.add_tsf_file(tsf_file.device_num_part,
-                                        tsf_file.datetime_start,
-                                        tsf_file.datetime_stop, path)
+                self.dbase.add_grav_tsf_file(tsf_file.device_num_part,
+                                             tsf_file.datetime_start,
+                                             tsf_file.datetime_stop, path)
                 self.logger.debug(f'TSF-file {path} added')
+
+                self.load_gravity_second_measures(tsf_file)
         self.logger.debug('Loading tsf-files finished')
 
     def load_seismic_files(self):
