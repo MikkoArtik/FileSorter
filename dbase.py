@@ -154,8 +154,8 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'status for link with id {link_id} not change')
 
-    def get_id_dat_file_by_path(self, path: str) -> Union[int, None]:
-        query = f'SELECT id FROM dat_files WHERE path=\'{path}\''
+    def get_id_grav_dat_file_by_path(self, path: str) -> Union[int, None]:
+        query = f'SELECT id FROM grav_dat_files WHERE path=\'{path}\''
         cursor = self.connection.cursor()
         cursor.execute(query)
         records = cursor.fetchone()
@@ -164,23 +164,17 @@ class SqliteDbase:
         else:
             return records[0]
 
-    def add_dat_file(self, grav_number: str, station: str,
-                     datetime_start: datetime, datetime_stop: datetime,
-                     path: str):
+    def add_grav_dat_file(self, grav_number: str, station: str,
+                          datetime_start: datetime, datetime_stop: datetime,
+                          path: str):
         filename = os.path.basename(path)
-        link_id = self.get_link_id(filename)
-        if not link_id:
-            return
-        else:
-            self.change_link_status(link_id, True)
-
         sensor_id = self.add_gravimeter(grav_number)
         point_id = self.add_station(station)
 
-        query = 'INSERT INTO dat_files(gravimeter_id, station_id, ' \
-                'link_id, datetime_start, datetime_stop, path) VALUES ' \
-                f'({sensor_id}, {point_id}, {link_id}, ' \
-                f'\'{datetime_start}\', \'{datetime_stop}\', \'{path}\');'
+        query = 'INSERT INTO grav_dat_files(gravimeter_id, station_id, ' \
+                'datetime_start, datetime_stop, filename, path) VALUES ' \
+                f'({sensor_id}, {point_id}, \'{datetime_start}\', ' \
+                f'\'{datetime_stop}\', \'{filename}\',\'{path}\');'
         try:
             self.connection.cursor().execute(query)
             self.connection.commit()
@@ -190,9 +184,9 @@ class SqliteDbase:
 
     def add_gravity_measure(self, dat_file_id: int, datetime_val: datetime,
                             corr_grav: float):
-        query = 'INSERT INTO gravity_measures (dat_file_id, datetime_val, ' \
-                                             f'corr_grav) VALUES ' \
-                f'({dat_file_id}, \'{datetime_val}\', {corr_grav});'
+        query = 'INSERT INTO gravity_measures_minutes (' \
+            'grav_dat_file_id, datetime_val, corr_grav) VALUES ' \
+            f'({dat_file_id}, \'{datetime_val}\', {corr_grav});'
         self.connection.cursor().execute(query)
         self.connection.commit()
 
