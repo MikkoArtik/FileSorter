@@ -1,19 +1,3 @@
-CREATE TABLE chains(
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    dev_num_part VARCHAR(10) NOT NULL,
-    path TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE links(
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    chain_id INTEGER NOT NULL,
-    link_index INTEGER NOT NULL,
-    filename VARCHAR(100) NOT NULL,
-    is_exist int DEFAULT 0,
-    UNIQUE(chain_id, link_index),
-    FOREIGN KEY (chain_id) REFERENCES chains(id)
-);
-
 CREATE TABLE gravimeters(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     number VARCHAR(15) UNIQUE NOT NULL
@@ -31,17 +15,32 @@ CREATE TABLE stations(
     yWGS84 REAL NOT NULL DEFAULT 0
 );
 
-CREATE TABLE dat_files(
+CREATE TABLE chains(
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    dev_num_part VARCHAR(10) NOT NULL,
+    path TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE links(
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    chain_id INTEGER NOT NULL,
+    link_index INTEGER NOT NULL,
+    filename VARCHAR(100) NOT NULL,
+    is_exist int DEFAULT 0,
+    UNIQUE(chain_id, link_index),
+    FOREIGN KEY (chain_id) REFERENCES chains(id)
+);
+
+CREATE TABLE grav_dat_files(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     gravimeter_id INTEGER NOT NULL,
     station_id INTEGER NOT NULL,
-    link_id INTEGER NOT NULL,
     datetime_start DATETIME NOT NULL,
     datetime_stop DATETIME NOT NULL,
+    filename VARCHAR(100) UNIQUE NOT NULL,
     path TEXT UNIQUE NOT NULL,
     FOREIGN KEY(gravimeter_id) REFERENCES gravimeters(id),
-    FOREIGN KEY(station_id) REFERENCES stations(id),
-    FOREIGN KEY(link_id) REFERENCES links(id)
+    FOREIGN KEY(station_id) REFERENCES stations(id)
 );
 
 CREATE TABLE tsf_files(
