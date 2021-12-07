@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
-from typing import Union, List, Tuple, Set
+from typing import Union, List, Tuple, NamedTuple
 import logging
 
 
@@ -173,12 +173,19 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'DAT-file with path {path} not add to dbase')
 
-    def add_gravity_measure(self, dat_file_id: int, datetime_val: datetime,
-                            corr_grav: float):
-        query = 'INSERT INTO gravity_measures_minutes (' \
-            'grav_dat_file_id, datetime_val, corr_grav) VALUES ' \
-            f'({dat_file_id}, \'{datetime_val}\', {corr_grav});'
-        self.connection.cursor().execute(query)
+    def add_gravity_minute_measures(self, dat_file_id: int,
+                                    measures: List[Tuple[datetime, int]]):
+        query_template = 'INSERT INTO gravity_measures_minutes (' \
+                         'grav_dat_file_id, datetime_val, corr_grav) ' \
+                         'VALUES ({dat_file_id}, \'{datetime_val}\', ' \
+                         '{corr_grav});'
+
+        cursor = self.connection.cursor()
+        for datetime_val, corr_grav in measures:
+            query = query_template.format(dat_file_id=dat_file_id,
+                                          datetime_val=datetime_val,
+                                          corr_grav=corr_grav)
+            cursor.execute(query)
         self.connection.commit()
 
     def add_tsf_file(self, dev_num_part: str, datetime_start: datetime,
