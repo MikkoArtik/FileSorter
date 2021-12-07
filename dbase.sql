@@ -107,7 +107,7 @@ CREATE TABLE seis_energy(
     Ey REAL NOT NULL DEFAULT 0,
     Ez REAL NOT NULL DEFAULT 0,
     Efull REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (minute_id) REFERENCES minutes_intersection(id) ON DELETE CASCADE
+    FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
 );
 
 CREATE TABLE corrections(
@@ -139,15 +139,18 @@ SELECT gdf.id as grav_dat_file_id, l.link_index, c.cycle_path FROM links AS l
 LEFT JOIN grav_dat_files AS gdf ON l.filename=gdf.filename
 LEFT JOIN chains AS c ON c.id=l.chain_id;
 
-
-CREATE VIEW grav_seis_times
+CREATE VIEW grav_seis_pairs
 AS
 SELECT g.id AS grav_id, s.id AS seis_id, g.datetime_start AS grav_dt_start,
 g.datetime_stop AS grav_dt_stop, s.datetime_start AS seis_datetime_start,
 s.datetime_stop AS seis_datetime_stop
-FROM dat_files AS g JOIN seis_files AS s ON g.station_id = s.station_id AND
+FROM grav_dat_files AS g JOIN seis_files AS s ON g.station_id = s.station_id AND
 MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
 JOIN good_seis_files AS gsf ON s.id=gsf.id;
+
+
+
+
 
 CREATE VIEW minimal_energy
 AS
