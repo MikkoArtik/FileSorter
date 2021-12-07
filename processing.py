@@ -62,8 +62,8 @@ class Processing:
             self.config.export_root, EXPORT_CORRECTIONS_FOLDER_NAME)
 
     def set_intersection_times(self):
-        self.dbase.clear_time_intersections()
-        grav_seis_pairs = self.dbase.get_grav_seis_times()
+        self.dbase.clear_grav_seis_time_intersections()
+        grav_seis_pairs = self.dbase.get_grav_seis_pairs()
         for grav_id, seis_id, *times in grav_seis_pairs:
             grav_dt_start, grav_dt_stop = times[:2]
             seis_dt_start, seis_dt_stop = times[2:]
@@ -73,8 +73,8 @@ class Processing:
             right_limit = get_intersection_time(grav_dt_stop, seis_dt_stop,
                                                 'right')
             if left_limit < right_limit:
-                self.dbase.add_time_intersection(grav_id, seis_id,
-                                                 left_limit, right_limit)
+                self.dbase.add_grav_seis_time_intersection(
+                    grav_id, seis_id, left_limit, right_limit)
 
     def get_energies(self, seis_file_path: str, datetime_min: datetime,
                      datetime_max: datetime,

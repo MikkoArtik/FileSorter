@@ -298,8 +298,8 @@ class SqliteDbase:
             records.append((file_id, path, components))
         return records
 
-    def update_file_checking(self, file_id: int, component: str,
-                             conclusion: str):
+    def update_seis_file_checking_status(self, file_id: int, component: str,
+                                         conclusion: str):
         if component.upper() == 'X':
             query = f'UPDATE seis_files_defect_info ' \
                     f'SET x_channel=\'{conclusion}\' WHERE seis_id={file_id};'
@@ -314,8 +314,13 @@ class SqliteDbase:
         self.connection.cursor().execute(query)
         self.connection.commit()
 
-    def get_grav_seis_times(self):
-        query = 'SELECT * FROM grav_seis_times;'
+    def clear_grav_seis_time_intersections(self):
+        query = 'DELETE FROM grav_seis_time_intersections;'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
+
+    def get_grav_seis_pairs(self):
+        query = 'SELECT * FROM grav_seis_pairs;'
         cursor = self.connection.cursor()
         cursor.execute(query)
         src_data = [list(x) for x in cursor.fetchall()]
@@ -329,17 +334,13 @@ class SqliteDbase:
             records.append(record)
         return records
 
-    def clear_time_intersections(self):
-        query = 'DELETE FROM time_intersection;'
-        self.connection.cursor().execute(query)
-        self.connection.commit()
-
-    def add_time_intersection(self, grav_dat_id: int, seis_id,
-                              datetime_left: datetime,
-                              datetime_right: datetime):
-        query = 'INSERT INTO time_intersection(grav_dat_id, seis_id, ' \
-                f'datetime_start, datetime_stop) VALUES ({grav_dat_id}, ' \
-                f'{seis_id}, \'{datetime_left}\', \'{datetime_right}\');'
+    def add_grav_seis_time_intersection(self, grav_dat_id: int, seis_id,
+                                        datetime_left: datetime,
+                                        datetime_right: datetime):
+        query = 'INSERT INTO grav_seis_time_intersections(grav_dat_id, ' \
+                'seis_id, datetime_start, datetime_stop) VALUES (' \
+                f'{grav_dat_id}, {seis_id}, \'{datetime_left}\', ' \
+                f'\'{datetime_right}\');'
         try:
             self.connection.cursor().execute(query)
             self.connection.commit()
@@ -347,10 +348,9 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'Fail adding time intersection')
 
-    def get_time_intersections(self) -> List[Tuple[int, int, int, datetime,
-                                                   datetime]]:
-        query = 'SELECT * FROM time_intersection WHERE seis_id IN ' \
-                '(SELECT id FROM good_seis_files);'
+    def get_grav_seis_time_intersection(self) -> List[Tuple[int, int, int,
+                                                      datetime, datetime]]:
+        query = 'SELECT * FROM grav_seis_time_intersections;'
         cursor = self.connection.cursor()
         cursor.execute(query)
         src_data = [list(x) for x in cursor.fetchall()]
@@ -363,6 +363,13 @@ class SqliteDbase:
                 record.append(dt)
             records.append(tuple(record))
         return records
+
+
+
+
+
+
+
 
     def get_seis_file_path_by_id(self, id_val: int) -> Union[str, None]:
         query = f'SELECT path from seis_files WHERE id={id_val}'

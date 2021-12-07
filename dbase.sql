@@ -99,14 +99,6 @@ CREATE TABLE grav_seis_time_intersections(
     FOREIGN KEY(seis_id) REFERENCES seis_files(id)
 );
 
-CREATE TABLE minutes_intersection(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    time_intersection_id INTEGER NOT NULL,
-    minute_index INTEGER NOT NULL,
-    UNIQUE(time_intersection_id, minute_index),
-    FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
-);
-
 CREATE TABLE seis_energy(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     minute_id INTEGER NOT NULL,
