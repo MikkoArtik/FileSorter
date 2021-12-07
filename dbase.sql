@@ -7,10 +7,10 @@ CREATE TABLE chains(
 CREATE TABLE links(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     chain_id INTEGER NOT NULL,
-    link_id INTEGER NOT NULL,
-    filename VARCHAR(100) UNIQUE NOT NULL,
+    link_index INTEGER NOT NULL,
+    filename VARCHAR(100) NOT NULL,
     is_exist int DEFAULT 0,
-    UNIQUE(chain_id, link_id),
+    UNIQUE(chain_id, link_index),
     FOREIGN KEY (chain_id) REFERENCES chains(id)
 );
 
