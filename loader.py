@@ -42,7 +42,7 @@ class Loader:
         self.logger.debug('Loading chains finished')
 
     def load_gravity_measures(self, dat_file: DATFile):
-        id_val = self.dbase.get_id_dat_file_by_path(dat_file.path)
+        id_val = self.dbase.get_id_grav_dat_file_by_path(dat_file.path)
         if not id_val:
             return
         for measure in dat_file.measures:
@@ -66,10 +66,11 @@ class Loader:
                         f'File {filename} incorrect time domain. Skipped')
                     continue
 
-                self.dbase.add_dat_file(dat_file.device_full_number,
-                                        dat_file.station,
-                                        dat_file.datetime_start,
-                                        dat_file.datetime_stop, path)
+                self.dbase.add_grav_dat_file(dat_file.device_full_number,
+                                             dat_file.station,
+                                             dat_file.datetime_start,
+                                             dat_file.datetime_stop, path)
+                self.dbase.change_link_status(filename, True)
 
                 self.load_gravity_measures(dat_file)
                 self.logger.debug(f'DAT-file {path} added')
