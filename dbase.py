@@ -54,7 +54,7 @@ class SqliteDbase:
         return id_val
 
     def add_link(self, chain_id: int, order: int, filename: str) -> int:
-        query = 'INSERT INTO links(chain_id, link_id, filename) VALUES ' \
+        query = 'INSERT INTO links(chain_id, link_index, filename) VALUES ' \
                 f'({chain_id}, {order}, \'{filename}\');'
         cursor = self.connection.cursor()
         try:
@@ -64,7 +64,8 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'insert new link {filename} failed')
 
-        query = f'SELECT id FROM links WHERE filename=\'{filename}\''
+        query = f'SELECT id FROM links ' \
+                f'WHERE filename=\'{filename}\' AND chain_id={chain_id};'
         id_val = cursor.execute(query).fetchone()[0]
         self.logger.info(f'link: filename={filename} order={order} '
                          f'chain_id={chain_id} id={id_val}')
