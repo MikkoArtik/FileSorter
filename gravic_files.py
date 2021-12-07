@@ -226,14 +226,15 @@ class CycleFile:
         self.path = path
         self.defects = self.__load_defect_markers()
 
-    def __load_defect_markers(self) -> Dict[int, Dict[int, int]]:
+    def __load_defect_markers(self) -> Dict[int, Dict[int, bool]]:
         defects = {}
         with open(self.path) as file_ctx:
             next(file_ctx)
             for line in file_ctx:
                 tmp_arr = line.rstrip().split('\t')
                 session = int(tmp_arr[0])
-                cycle_index, is_bad = int(tmp_arr[1]), int(tmp_arr[2])
+                cycle_index, is_bad_num = int(tmp_arr[1]), int(tmp_arr[2])
+                is_bad = True if is_bad_num == 1 else False
                 if session not in defects:
                     defects[session] = {cycle_index: is_bad}
                 else:
