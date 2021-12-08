@@ -348,8 +348,8 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'Fail adding time intersection')
 
-    def get_grav_seis_time_intersection(self) -> List[Tuple[int, int, int,
-                                                      datetime, datetime]]:
+    def get_grav_seis_time_intersections(self) -> List[Tuple[int, int, int,
+                                                             datetime, datetime]]:
         query = 'SELECT * FROM grav_seis_time_intersections;'
         cursor = self.connection.cursor()
         cursor.execute(query)
@@ -364,8 +364,25 @@ class SqliteDbase:
             records.append(tuple(record))
         return records
 
+    def delete_all_energies(self):
+        query = 'DELETE FROM seis_energy;'
+        self.connection.cursor().execute(query)
+        self.connection.commit()
 
-
+    def add_energies(self, time_intersection_id: int,
+                     energies: List[List[float]]):
+        query_template = 'INSERT INTO seis_energy(time_intersection_id, ' \
+                         'minute_index, Ex, Ey, Ez, Efull) ' \
+                         'VALUES ({time_intersection_id}, {minute_index}, ' \
+                         '{e_x}, {e_y}, {e_z}, {e_f});'
+        cursor = self.connection.cursor()
+        for index, energy_xyzf in enumerate(energies):
+            query = query_template.format(
+                time_intersection_id=time_intersection_id,
+                minute_index=index, e_x=energy_xyzf[0], e_y=energy_xyzf[1],
+                e_z=energy_xyzf[2], e_f=energy_xyzf[3])
+            cursor.execute(query)
+        self.connection.commit()
 
 
 
@@ -383,41 +400,7 @@ class SqliteDbase:
             self.logger.info(f'Seismic file: id={id_val} path={record[0]}')
             return record[0]
 
-    def add_minute(self, time_intersection_id: int, minute_index: int) -> int:
-        query = 'INSERT INTO minutes_intersection(time_intersection_id, ' \
-                                                 'minute_index) VALUES (' \
-                f'{time_intersection_id}, {minute_index});'
-        try:
-            self.connection.cursor().execute(query)
-            self.connection.commit()
-        except sqlite3.IntegrityError:
-            pass
 
-        query = 'SELECT id FROM minutes_intersection ' \
-                f'WHERE time_intersection_id={time_intersection_id} AND ' \
-                f'minute_index={minute_index};'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        records = cursor.fetchone()
-        return records[0]
-
-    def delete_all_energies(self):
-        query = 'DELETE FROM seis_energy;'
-        self.connection.cursor().execute(query)
-        self.connection.commit()
-
-    def add_energies(self, time_intersection_id: int,
-                     energies: List[List[float]]):
-        query_template = 'INSERT INTO seis_energy(minute_id, Ex, Ey, Ez, ' \
-                                                 'Efull) ' \
-                         'VALUES ({minute_id}, {e_x}, {e_y}, {e_z}, {e_f});'
-        for index, energy_xyzf in enumerate(energies):
-            minute_id = self.add_minute(time_intersection_id, index)
-            query = query_template.format(
-                minute_id=minute_id, e_x=energy_xyzf[0], e_y=energy_xyzf[1],
-                e_z=energy_xyzf[2], e_f=energy_xyzf[3])
-            self.connection.cursor().execute(query)
-            self.connection.commit()
 
     def get_pre_correction_data(
             self) -> List[Tuple[int, float, float]]:
