@@ -150,17 +150,19 @@ FROM grav_dat_files AS g JOIN seis_files AS s ON g.station_id = s.station_id AND
 MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
 JOIN good_seis_files AS gsf ON s.id=gsf.id;
 
-
-
-
-
 CREATE VIEW minimal_energy
 AS
-SELECT mi.time_intersection_id, mi.id AS minute_id, Ez
-FROM seis_energy AS se
-JOIN minutes_intersection AS mi ON se.minute_id=mi.id
+SELECT time_intersection_id, minute_index, Ex, Ey, Ez, Efull FROM seis_energy se
+WHERE minute_index IN (SELECT (STRFTIME('%s', datetime_val) - STRFTIME('%s', (SELECT datetime_start FROM grav_seis_time_intersections WHERE id=time_intersection_id))) / 60 - 1
+FROM gravity_measures_minutes gmm
+WHERE grav_dat_file_id = (SELECT grav_dat_id FROM grav_seis_time_intersections gsti WHERE gsti.id=time_intersection_id) AND is_bad = 0)
 GROUP BY time_intersection_id
-HAVING Efull = MIN(EFull);
+HAVING Efull = MIN(Efull)
+
+
+
+
+
 
 CREATE VIEW energy_ratio
 AS

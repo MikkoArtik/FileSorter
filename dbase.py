@@ -369,6 +369,18 @@ class SqliteDbase:
         self.connection.cursor().execute(query)
         self.connection.commit()
 
+    def get_seis_file_path_by_id(self, id_val: int) -> Union[str, None]:
+        query = f'SELECT path from seis_files WHERE id={id_val}'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        record = cursor.fetchone()
+        if not record:
+            self.logger.error(f'Seismic file with id={id_val} not found')
+            return None
+        else:
+            self.logger.info(f'Seismic file: id={id_val} path={record[0]}')
+            return record[0]
+
     def add_energies(self, time_intersection_id: int,
                      energies: List[List[float]]):
         query_template = 'INSERT INTO seis_energy(time_intersection_id, ' \
@@ -388,17 +400,7 @@ class SqliteDbase:
 
 
 
-    def get_seis_file_path_by_id(self, id_val: int) -> Union[str, None]:
-        query = f'SELECT path from seis_files WHERE id={id_val}'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        record = cursor.fetchone()
-        if not record:
-            self.logger.error(f'Seismic file with id={id_val} not found')
-            return None
-        else:
-            self.logger.info(f'Seismic file: id={id_val} path={record[0]}')
-            return record[0]
+
 
 
 
