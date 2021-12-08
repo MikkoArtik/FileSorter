@@ -158,14 +158,14 @@ WHERE minute_index IN (SELECT (STRFTIME('%s', datetime_val) - STRFTIME('%s', (SE
 FROM gravity_measures_minutes gmm
 WHERE grav_dat_file_id = (SELECT grav_dat_id FROM grav_seis_time_intersections gsti WHERE gsti.id=time_intersection_id) AND is_bad = 0)
 GROUP BY time_intersection_id
-HAVING Efull = MIN(Efull)
+HAVING Efull = MIN(Efull);
 
 CREATE VIEW energy_ratio
 AS
 SELECT se.time_intersection_id, se.minute_index,
        se.Ex/me.Ex AS Rx, se.Ey/me.Ey AS Ry, se.Ez/me.Ez AS Rz
 FROM seis_energy se
-JOIN minimal_energy me ON se.time_intersection_id=me.time_intersection_id
+JOIN minimal_energy me ON se.time_intersection_id=me.time_intersection_id;
 
 CREATE VIEW grav_level
 AS
@@ -175,20 +175,19 @@ JOIN grav_seis_time_intersections gsti ON me.time_intersection_id=gsti.id
 JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id=gsti.grav_dat_id
 WHERE gmm.datetime_val=datetime(strftime('%s', gsti.datetime_start)+(me.minute_index + 1) * 60, 'unixepoch');
 
-
-
-
-
-
 CREATE VIEW pre_correction
 AS
-SELECT mi.id AS minute_id, round(gl.avg_grav-gm.corr_grav, 4) AS amplitude, er.energy_ratio
-FROM minutes_intersection AS mi
-JOIN time_intersection AS ti ON mi.time_intersection_id=ti.id
-JOIN gravity_measures AS gm ON gm.dat_file_id=ti.grav_dat_id
-JOIN grav_level AS gl ON gl.time_intersection_id=ti.id
-JOIN energy_ratio AS er ON er.minute_id=mi.id
-WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
+SELECT gsti.id AS time_intersection_id, gmm.id AS grav_measure_id,
+       ROUND(gmm.corr_grav - gl.quite_grav_level, 4) AS grav_amplitude, Rz
+FROM seis_energy se
+JOIN grav_seis_time_intersections gsti ON gsti.id=se.time_intersection_id
+JOIN minimal_energy me ON me.time_intersection_id=se.time_intersection_id
+JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id =gsti.grav_dat_id AND gmm.datetime_val = DATETIME(STRFTIME('%s', gsti.datetime_start)+(se.minute_index + 1) * 60, 'unixepoch')
+JOIN grav_level gl ON gl.time_intersection_id =se.time_intersection_id
+JOIN energy_ratio er ON er.time_intersection_id=se.time_intersection_id AND er.minute_index=se.minute_index;
+
+
+
 
 CREATE VIEW using_seis_files
 AS
