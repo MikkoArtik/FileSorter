@@ -110,7 +110,7 @@ class Processing:
 
     def save_energies(self):
         self.dbase.delete_all_energies()
-        records = self.dbase.get_time_intersections()
+        records = self.dbase.get_grav_seis_time_intersections()
         for i, record in enumerate(records):
             pair_id, seis_file_id = record[0], record[2]
             min_datetime, max_datetime = record[3:5]
