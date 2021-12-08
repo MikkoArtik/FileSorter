@@ -159,16 +159,14 @@ WHERE grav_dat_file_id = (SELECT grav_dat_id FROM grav_seis_time_intersections g
 GROUP BY time_intersection_id
 HAVING Efull = MIN(Efull)
 
-
-
-
-
-
 CREATE VIEW energy_ratio
 AS
-SELECT se.minute_id, se.Ez/me.eZ AS energy_ratio FROM seis_energy AS se
-JOIN minutes_intersection AS mi ON se.minute_id=mi.id
-JOIN minimal_energy AS me ON me.time_intersection_id=mi.time_intersection_id;
+SELECT se.time_intersection_id, se.minute_index,
+       se.Ex/me.Ex AS Rx, se.Ey/me.Ey AS Ry, se.Ez/me.Ez AS Rz FROM seis_energy se
+JOIN minimal_energy me ON se.time_intersection_id=me.time_intersection_id
+
+
+
 
 CREATE VIEW grav_level
 AS
