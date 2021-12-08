@@ -112,9 +112,11 @@ CREATE TABLE seis_energy(
 
 CREATE TABLE corrections(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    minute_id INTEGER NOT NULL,
+    time_intersection_id INTEGER NOT NULL,
+    grav_measure_id INTEGER NOT NULL,
     seis_corr REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (minute_id) REFERENCES minutes_intersection(id) ON DELETE CASCADE
+    FOREIGN KEY (time_intersection_id) REFERENCES grav_seis_time_intersections (id) ON DELETE CASCADE
+    FOREIGN KEY (grav_measure_id) REFERENCES gravity_measures_minutes(id) ON DELETE CASCADE
 );
 
 
