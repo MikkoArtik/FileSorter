@@ -396,14 +396,6 @@ class SqliteDbase:
             cursor.execute(query)
         self.connection.commit()
 
-
-
-
-
-
-
-
-
     def get_pre_correction_data(
             self) -> List[Tuple[int, float, float]]:
         query = 'SELECT * FROM pre_correction;'
@@ -416,13 +408,19 @@ class SqliteDbase:
         self.connection.cursor().execute(query)
         self.connection.commit()
 
-    def add_single_correction(self, minute_id: int, seis_correction: float):
-        query = 'INSERT INTO corrections(minute_id, seis_corr) VALUES ' \
-                f'({minute_id}, {seis_correction});'
+    def add_single_correction(self, time_intersection_id: int,
+                              grav_measure_id: int, seis_correction: float):
+        query = 'INSERT INTO corrections(time_intersection_id, ' \
+                'grav_measure_id, seis_corr) VALUES (' \
+                f'{time_intersection_id}, {grav_measure_id}, {seis_correction});'
         self.connection.cursor().execute(query)
+
+    def add_seis_corrections(self, time_intersection_id: int,
+                             corrections: List[Tuple[int, float]]):
+        for grav_measure_id, correction_val in corrections:
+            self.add_single_correction(time_intersection_id, grav_measure_id,
+                                       correction_val)
         self.connection.commit()
-        self.logger.debug(f'Seismic correction with minute_id={minute_id} '
-                          f'value={seis_correction} added')
 
     def get_all_chain_ids(self) -> List[int]:
         query = 'SELECT id FROM chains;'
