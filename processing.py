@@ -122,10 +122,18 @@ class Processing:
 
     def add_corrections(self):
         self.dbase.clear_corrections()
+        corrections = {}
         for record in self.dbase.get_pre_correction_data():
-            minute_id, amplitude, energy_ratio = record
+            time_intersection_id, grav_measure_id = record[:2]
+            amplitude, energy_ratio = record[2:]
             correction_value = get_correction_value(amplitude, energy_ratio)
-            self.dbase.add_single_correction(minute_id, correction_value)
+
+            vals = corrections.get(time_intersection_id, [])
+            vals.append((grav_measure_id, correction_value))
+            corrections[time_intersection_id] = vals
+
+        for ti_id, vals in corrections.items():
+            self.dbase.add_seis_corrections(ti_id, vals)
 
     def get_link_corrections(
             self, chain_id: int, link_id: int, gravimeter_id: int,
