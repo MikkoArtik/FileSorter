@@ -152,7 +152,8 @@ JOIN good_seis_files AS gsf ON s.id=gsf.id;
 
 CREATE VIEW minimal_energy
 AS
-SELECT time_intersection_id, minute_index, Ex, Ey, Ez, Efull FROM seis_energy se
+SELECT time_intersection_id, minute_index, Ex, Ey, Ez, Efull
+FROM seis_energy se
 WHERE minute_index IN (SELECT (STRFTIME('%s', datetime_val) - STRFTIME('%s', (SELECT datetime_start FROM grav_seis_time_intersections WHERE id=time_intersection_id))) / 60 - 1
 FROM gravity_measures_minutes gmm
 WHERE grav_dat_file_id = (SELECT grav_dat_id FROM grav_seis_time_intersections gsti WHERE gsti.id=time_intersection_id) AND is_bad = 0)
@@ -162,20 +163,22 @@ HAVING Efull = MIN(Efull)
 CREATE VIEW energy_ratio
 AS
 SELECT se.time_intersection_id, se.minute_index,
-       se.Ex/me.Ex AS Rx, se.Ey/me.Ey AS Ry, se.Ez/me.Ez AS Rz FROM seis_energy se
+       se.Ex/me.Ex AS Rx, se.Ey/me.Ey AS Ry, se.Ez/me.Ez AS Rz
+FROM seis_energy se
 JOIN minimal_energy me ON se.time_intersection_id=me.time_intersection_id
-
-
-
 
 CREATE VIEW grav_level
 AS
-SELECT ti.id AS time_intersection_id, gm.corr_grav AS avg_grav
-FROM minimal_energy AS me
-JOIN time_intersection AS ti ON me.time_intersection_id=ti.id
-JOIN minutes_intersection AS mi ON me.minute_id=mi.id
-JOIN gravity_measures AS gm ON gm.dat_file_id=ti.grav_dat_id
-WHERE gm.datetime_val=datetime(strftime('%s', ti.datetime_start)+(mi.minute_index + 1) * 60, 'unixepoch');
+SELECT time_intersection_id, corr_grav as quite_grav_level
+FROM minimal_energy me
+JOIN grav_seis_time_intersections gsti ON me.time_intersection_id=gsti.id
+JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id=gsti.grav_dat_id
+WHERE gmm.datetime_val=datetime(strftime('%s', gsti.datetime_start)+(me.minute_index + 1) * 60, 'unixepoch');
+
+
+
+
+
 
 CREATE VIEW pre_correction
 AS
