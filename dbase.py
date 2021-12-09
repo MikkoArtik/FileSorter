@@ -512,9 +512,9 @@ class SqliteDbase:
         return filename
 
     def get_chain_datetime_by_id(self, chain_id: int) -> datetime:
-        query = 'SELECT MIN(datetime_start) FROM dat_files as df ' \
-                'WHERE df.link_id IN (SELECT id FROM links as l ' \
-                f'WHERE l.chain_id={chain_id});'
+        query = 'SELECT MIN(datetime_start) FROM grav_dat_files as df ' \
+                'WHERE filename=(SELECT filename FROM links ' \
+                f'WHERE chain_id={chain_id});'
         cursor = self.connection.cursor()
         cursor.execute(query)
         datetime_str = cursor.fetchone()[0]
