@@ -454,24 +454,18 @@ class SqliteDbase:
         query = 'SELECT COUNT(1) FROM sensor_pairs WHERE ' \
                 f'chain_id={chain_id} AND link_id={link_id} AND ' \
                 f'gravimeter_id={gravimeter_id} AND ' \
-                f'seismometer_id={seismometer_id}'
+                f'seismometer_id={seismometer_id};'
         cursor = self.connection.cursor()
         cursor.execute(query)
         if cursor.fetchone()[0]:
             return True
         return False
 
-    def get_gravity_measures_count_by_link_id(self, link_id: int) -> int:
-        query = 'SELECT COUNT(1) FROM gravity_measures ' \
-                'WHERE dat_file_id=(SELECT id FROM dat_files ' \
-                f'WHERE link_id={link_id})'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        return cursor.fetchone()[0]
-
-    def get_gravity_measures_by_file_id(self, id_val: int) -> List[float]:
-        query = 'SELECT corr_grav FROM gravity_measures ' \
-                f'WHERE dat_file_id={id_val};'
+    def get_gravity_defect_info_by_link_id(self, link_id: int) -> List[int]:
+        query = 'SELECT is_bad FROM gravity_measures_minutes ' \
+                'WHERE grav_dat_file_id=(SELECT id FROM grav_dat_files ' \
+                'WHERE filename=(SELECT filename FROM links WHERE ' \
+                f'id={link_id}));'
         cursor = self.connection.cursor()
         cursor.execute(query)
         return [x[0] for x in cursor.fetchall()]
