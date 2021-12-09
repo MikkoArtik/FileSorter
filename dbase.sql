@@ -132,7 +132,9 @@ AS
 SELECT sf.id
 FROM seis_files AS sf
 JOIN seis_files_defect_info AS di ON sf.id=di.seis_id
-WHERE di.x_channel NOT IN ('Bad', 'Unknown') AND di.y_channel NOT IN ('Bad', 'Unknown') AND di.z_channel NOT IN ('Bad', 'Unknown');
+WHERE di.x_channel NOT IN ('Bad', 'Unknown') AND
+      di.y_channel NOT IN ('Bad', 'Unknown') AND
+      di.z_channel NOT IN ('Bad', 'Unknown');
 
 CREATE VIEW grav_defect_input_preparing
 AS
