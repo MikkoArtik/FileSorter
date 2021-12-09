@@ -180,9 +180,9 @@ class Processing:
         path = os.path.join(folder_root, filename)
         header = ['seans', 'cycle', 'zabrak', 'popravka']
         with open(path, 'w') as file_ctx:
-            file_ctx.write('\t'.join(header) + '\n')
+            file_ctx.write('\t'.join(header) + '\r\n')
             for record in corrections:
-                line = '\t'.join((str(x) for x in record)) + '\n'
+                line = '\t'.join((str(x) for x in record)) + '\r\n'
                 file_ctx.write(line)
 
     def export_corrections(self, chain_ids: List[int] = []):
