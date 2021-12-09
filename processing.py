@@ -212,7 +212,7 @@ class Processing:
                 export_folder = os.path.join(
                     self.export_corrections_folder,
                     f'{gravimeter_short_number}-{seismometer_number}',
-                    chain_datetime.strftime('%Y-%m-%d'),
+                    chain_datetime.strftime('%Y_%m_%d'),
                     gravimeter_short_number
                 )
 
