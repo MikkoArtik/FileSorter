@@ -59,14 +59,15 @@ CREATE TABLE grav_tsf_files(
     dev_num_part VARCHAR(10) NOT NULL,
     datetime_start DATETIME NOT NULL,
     datetime_stop DATETIME NOT NULL,
-    path TEXT UNIQUE NOT NULL);
+    path TEXT UNIQUE NOT NULL
+);
 
 CREATE TABLE gravity_measures_seconds(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     grav_tsf_file_id INTEGER NOT NULL,
-    datetime_val DATETIME NOT NULL,
+    measure_index INTEGER NOT NULL,
     src_value REAL NOT NULL DEFAULT 0,
-    UNIQUE(grav_tsf_file_id, datetime_val),
+    UNIQUE(grav_tsf_file_id, measure_index),
     FOREIGN KEY (grav_tsf_file_id) REFERENCES grav_tsf_files(id) ON DELETE CASCADE
 );
 
