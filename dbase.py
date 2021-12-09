@@ -480,10 +480,14 @@ class SqliteDbase:
     def get_post_corrections_by_params(
             self, chain_id: int, link_id: int, gravimeter_id: int,
             seismometer_id: int) -> List[tuple]:
-        query = 'SELECT cycle, seis_corr FROM post_correction AS pc ' \
-                f'WHERE pc.chain_id={chain_id} AND pc.link_id={link_id} ' \
-                f'AND pc.gravimeter_id={gravimeter_id} AND ' \
-                f'pc.seismometer_id={seismometer_id} ORDER BY cycle;'
+        query = 'SELECT cycle_index, is_bad, seis_corr ' \
+                'FROM post_correction ' \
+                f'WHERE chain_id={chain_id} AND link_id={link_id} AND ' \
+                f'time_intersection_id=(SELECT time_intersection_id FROM ' \
+                f'sensor_pairs AS sp WHERE sp.chain_id={chain_id} AND ' \
+                f'sp.link_id={link_id} AND ' \
+                f'sp.seismometer_id={seismometer_id} AND ' \
+                f'sp.gravimeter_id={gravimeter_id}) ORDER BY cycle_index;'
         cursor = self.connection.cursor()
         cursor.execute(query)
         records = cursor.fetchall()
