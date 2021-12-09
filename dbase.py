@@ -470,15 +470,8 @@ class SqliteDbase:
         cursor.execute(query)
         return [x[0] for x in cursor.fetchall()]
 
-    def get_gravity_level_by_time_intersection_id(self, id_val: int) -> float:
-        query = 'SELECT avg_grav FROM grav_level ' \
-                f'WHERE time_intersection_id={id_val};'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        return cursor.fetchone()[0]
-
-    def get_session_index(self, chain_id: int, link_id: int) -> int:
-        query = 'SELECT link_id FROM links ' \
+    def get_link_index(self, chain_id: int, link_id: int) -> int:
+        query = 'SELECT link_index FROM links ' \
                 f'WHERE links.chain_id={chain_id} AND links.id={link_id};'
         cursor = self.connection.cursor()
         cursor.execute(query)
