@@ -521,12 +521,11 @@ class SqliteDbase:
         return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
 
     def get_gravimeter_short_number_by_id(self, gravimeter_id: int) -> str:
-        query = 'SELECT substr(number, -4) FROM gravimeters AS g ' \
-                f'WHERE g.id={gravimeter_id};'
+        query = f'SELECT number FROM gravimeters WHERE id={gravimeter_id};'
 
         cursor = self.connection.cursor()
         cursor.execute(query)
-        short_number = cursor.fetchone()[0]
+        short_number = str(int(cursor.fetchone()[0]))
         return short_number
 
     def get_seismometer_number_by_id(self, seismometer_id: int) -> str:
