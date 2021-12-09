@@ -430,8 +430,8 @@ class SqliteDbase:
         return ids_list
 
     def get_links_by_chain_id(self, chain_id: int) -> List[int]:
-        query = f'SELECT id FROM links AS l WHERE l.chain_id={chain_id} ' \
-                f'ORDER BY l.link_id ASC;'
+        query = f'SELECT id FROM links WHERE chain_id={chain_id} ' \
+                f'ORDER BY link_index ASC;'
         cursor = self.connection.cursor()
         cursor.execute(query)
         records = cursor.fetchall()
