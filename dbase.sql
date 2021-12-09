@@ -150,9 +150,18 @@ AS
 SELECT g.id AS grav_id, s.id AS seis_id, g.datetime_start AS grav_dt_start,
 g.datetime_stop AS grav_dt_stop, s.datetime_start AS seis_datetime_start,
 s.datetime_stop AS seis_datetime_stop
-FROM grav_dat_files AS g JOIN seis_files AS s ON g.station_id = s.station_id AND
-MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
-JOIN good_seis_files AS gsf ON s.id=gsf.id;
+FROM grav_dat_files AS g
+JOIN seis_files AS s ON g.station_id = s.station_id AND
+    MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
+JOIN good_seis_files AS gsf ON s.id=gsf.id
+WHERE g.filename NOT IN (
+	SELECT filename
+	FROM links
+	WHERE chain_id IN (
+		SELECT DISTINCT chain_id
+	    FROM links
+		WHERE is_exist=0)
+	);
 
 CREATE VIEW minimal_energy
 AS
