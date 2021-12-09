@@ -477,17 +477,6 @@ class SqliteDbase:
         cursor.execute(query)
         return cursor.fetchone()[0]
 
-    def is_chain_has_corrections(
-            self, chain_id: int, gravimeter_id: int,
-            seismometer_id: int) -> bool:
-        query = 'SELECT COUNT(1) FROM sensor_pairs AS sp WHERE ' \
-                f'sp.chain_id={chain_id} AND ' \
-                f'sp.gravimeter_id={gravimeter_id} AND ' \
-                f'sp.seismometer_id={seismometer_id};'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        return True if cursor.fetchone()[0] else False
-
     def get_post_corrections_by_params(
             self, chain_id: int, link_id: int, gravimeter_id: int,
             seismometer_id: int) -> List[tuple]:
@@ -499,6 +488,24 @@ class SqliteDbase:
         cursor.execute(query)
         records = cursor.fetchall()
         return records
+
+    def is_chain_has_corrections(
+            self, chain_id: int, gravimeter_id: int,
+            seismometer_id: int) -> bool:
+        query = 'SELECT COUNT(1) FROM sensor_pairs AS sp WHERE ' \
+                f'sp.chain_id={chain_id} AND ' \
+                f'sp.gravimeter_id={gravimeter_id} AND ' \
+                f'sp.seismometer_id={seismometer_id};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        return True if cursor.fetchone()[0] else False
+
+    def get_correction_filename(self, chain_id: int) -> str:
+        query = f'SELECT cycle_path FROM chains WHERE id={chain_id};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        filename = os.path.basename(cursor.fetchone()[0])
+        return filename
 
     def get_chain_datetime_by_id(self, chain_id: int) -> datetime:
         query = 'SELECT MIN(datetime_start) FROM dat_files as df ' \
