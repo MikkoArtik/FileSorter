@@ -210,14 +210,15 @@ class SqliteDbase:
         return cursor.fetchone()[0]
 
     def add_gravity_second_measures(self, tsf_file_id: int,
-                                    measures: List[Tuple[datetime, int]]):
+                                    measures: List[Tuple[int, int]]):
         query_template = 'INSERT INTO gravity_measures_seconds (' \
-                'grav_tsf_file_id, datetime_val, src_value) VALUES ' \
-                '({tsf_file_id}, \'{datetime_val}\', {src_value});'
+                'grav_tsf_file_id, measure_index, src_value) VALUES ' \
+                '({tsf_file_id}, \'{measure_index}\', {src_value});'
         cursor = self.connection.cursor()
-        for datetime_val, src_value in measures:
+        for measure_index, value in enumerate(measures):
+            datetime_val, src_value = value
             query = query_template.format(tsf_file_id=tsf_file_id,
-                                          datetime_val=datetime_val,
+                                          measure_index=measure_index,
                                           src_value=src_value)
             cursor.execute(query)
         self.connection.commit()
