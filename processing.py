@@ -199,9 +199,27 @@ class Processing:
                 if not chain_corrections:
                     continue
 
+                chain_datetime = self.dbase.get_chain_datetime_by_id(
+                    chain_id_val)
+
+                gravimeter_short_number = \
+                    self.dbase.get_gravimeter_short_number_by_id(
+                        gravimeter_id)
+
+                seismometer_number = \
+                    self.dbase.get_seismometer_number_by_id(seismometer_id)
+
+                export_folder = os.path.join(
+                    self.export_corrections_folder,
+                    f'{gravimeter_short_number}-{seismometer_number}',
+                    chain_datetime.strftime('%Y-%m-%d'),
+                    gravimeter_short_number
+                )
+
                 correction_filename = self.dbase.get_correction_filename(
                     chain_id_val)
-                self.save_corrections(correction_filename, chain_corrections)
+                self.save_corrections(export_folder, correction_filename,
+                                      chain_corrections)
 
     def run(self):
         self.set_intersection_times()
