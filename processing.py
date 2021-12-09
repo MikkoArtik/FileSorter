@@ -172,18 +172,12 @@ class Processing:
             corrections_list += link_corrections
         return corrections_list
 
-    def create_export_corrections_folder(self):
-        path = os.path.join(self.export_corrections_folder)
-        if os.path.exists(path):
-            return
-        os.makedirs(path)
-
-    def save_corrections(
-            self, filename: str,
+    def save_corrections(self, folder_root: str, filename: str,
             corrections: List[Tuple[int, int, int, float]]):
-        self.create_export_corrections_folder()
+        if not os.path.exists(folder_root):
+            os.makedirs(folder_root)
 
-        path = os.path.join(self.export_corrections_folder, filename)
+        path = os.path.join(folder_root, filename)
         header = ['seans', 'cycle', 'zabrak', 'popravka']
         with open(path, 'w') as file_ctx:
             file_ctx.write('\t'.join(header) + '\n')
