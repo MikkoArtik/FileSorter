@@ -140,7 +140,10 @@ CREATE VIEW grav_defect_input_preparing
 AS
 SELECT gdf.id as grav_dat_file_id, l.link_index, c.cycle_path FROM links AS l
 LEFT JOIN grav_dat_files AS gdf ON l.filename=gdf.filename
-LEFT JOIN chains AS c ON c.id=l.chain_id;
+LEFT JOIN chains AS c ON c.id=l.chain_id
+WHERE c.id NOT IN (SELECT DISTINCT chain_id
+                   FROM links
+                   WHERE is_exist=0);
 
 CREATE VIEW grav_seis_pairs
 AS
