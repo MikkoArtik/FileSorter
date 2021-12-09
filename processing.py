@@ -141,25 +141,20 @@ class Processing:
         is_pair_exists = self.dbase.is_sensor_pair_exists(
             chain_id, link_id, gravimeter_id, seismometer_id)
 
-        session_index = self.dbase.get_session_index(chain_id, link_id)
+        link_index = self.dbase.get_link_index(chain_id, link_id)
 
         corrections_list = []
         if not is_pair_exists:
-            measures_count = self.dbase.get_gravity_measures_count_by_link_id(link_id)
-            for i in range(measures_count):
-                corrections_list.append((session_index, i + 1, 0, 0))
+            is_bad_info = self.dbase.get_gravity_defect_info_by_link_id(
+                link_id)
+            for i, is_bad in enumerate(is_bad_info):
+                corrections_list.append((link_index, i + 1, is_bad, 0))
         else:
             records = self.dbase.get_post_corrections_by_params(
                 chain_id, link_id, gravimeter_id, seismometer_id)
-            for cycle_index, correction in records:
-                if correction is None:
-                    correction_value = 0
-                    is_bad = 1
-                else:
-                    correction_value = correction
-                    is_bad = 0
+            for cycle_index, is_bad, correction_value in records:
                 corrections_list.append(
-                    (session_index, cycle_index, is_bad, correction_value))
+                    (link_index, cycle_index, is_bad, correction_value))
         return corrections_list
 
     def get_chain_corrections(
