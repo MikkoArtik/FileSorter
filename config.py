@@ -30,8 +30,7 @@ STRUCTURE = {
     },
     'processing': {
         'f_min': 0.1,
-        'f_max': 10,
-        'epsilon': 3
+        'f_max': 10
     },
     'export': {
         'root': 'path'
