@@ -226,3 +226,7 @@ class Processing:
         self.save_energies()
         self.add_corrections()
         self.export_corrections()
+
+    def recalc_corrections(self):
+        self.save_energies()
+        self.add_corrections()
