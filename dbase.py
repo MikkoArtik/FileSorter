@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
+from datetime import timedelta
 from typing import Union, List, Tuple, Dict
 import logging
 
@@ -550,14 +551,133 @@ class SqliteDbase:
         records = cursor.fetchall()
         return [x[0] for x in records]
 
-    def get_seis_energy_by_time_intersection_id(
-            self, id_val: int) -> List[Tuple[float, float, float, float]]:
-        query = 'SELECT Ex, Ey, Ez, Efull FROM seis_energy ' \
-            'WHERE minute_id IN (SELECT id FROM minutes_intersection ' \
-            f'WHERE time_intersection_id={id_val});'
+    def get_grav_minute_measures_by_ti_id(
+            self, ti_id: int) -> List[Tuple[datetime, float, bool]]:
         cursor = self.connection.cursor()
+
+        query = 'SELECT datetime_val, corr_grav, is_bad ' \
+                'FROM gravity_measures_minutes ' \
+                'WHERE grav_dat_file_id=(' \
+                '   SELECT grav_dat_id ' \
+                '   FROM grav_seis_time_intersections' \
+                f'   WHERE id={ti_id});'
+
         cursor.execute(query)
-        return cursor.fetchall()
+        result = []
+        for rec in cursor.fetchall():
+            dt_val = datetime.strptime(rec[0], '%Y-%m-%d %H:%M:%S')
+            is_bad = True if rec[2] else False
+            result.append((dt_val, rec[1], is_bad))
+        return result
+
+
+    def get_seis_corrections_by_ti_id(self, ti_id: int) -> List[float]:
+        cursor = self.connection.cursor()
+
+        query = 'SELECT id ' \
+                'FROM gravity_measures_minutes ' \
+                'WHERE grav_dat_file_id=(' \
+                '   SELECT grav_dat_id ' \
+                '   FROM grav_seis_time_intersections' \
+                f'   WHERE id={ti_id});'
+        cursor.execute(query)
+        result = dict()
+        for rec in cursor.fetchall():
+            id_val = rec[0]
+            result[id_val] = 0
+
+        query = 'SELECT grav_measure_id, seis_corr ' \
+                'FROM corrections ' \
+                f'WHERE time_intersection_id={ti_id};'
+        cursor.execute(query)
+        for rec in cursor.fetchall():
+            id_val, corr_val = rec
+            result[id_val] = corr_val
+
+        return [x[1] for x in
+                sorted(list(result.items()), key=lambda x: x[0])]
+
+    def get_grav_level_by_ti_id(self, ti_id: int) -> float:
+        cursor = self.connection.cursor()
+
+        query = 'SELECT quite_grav_level ' \
+                'FROM grav_level ' \
+                f'WHERE time_intersection_id={ti_id};'
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def get_seis_energy_by_ti_id(self,
+                                 ti_id: int) -> List[Tuple[datetime, float]]:
+        cursor = self.connection.cursor()
+
+        query = 'SELECT datetime_start ' \
+                'FROM grav_seis_time_intersections ' \
+                f'WHERE id={ti_id};'
+        cursor.execute(query)
+
+        datetime_start = datetime.strptime(cursor.fetchone()[0],
+                                           '%Y-%m-%d %H:%M:%S')
+
+        query = 'SELECT minute_index, Ez ' \
+                'FROM seis_energy ' \
+                f'WHERE time_intersection_id={ti_id} ' \
+                'ORDER BY minute_index ASC;'
+        cursor.execute(query)
+
+        energy_vals = []
+        for minute_index, e_z in cursor.fetchall():
+            datetime_val = datetime_start + timedelta(
+                minutes=minute_index + 1)
+            energy_vals.append((datetime_val, e_z))
+        return energy_vals
+
+    def get_seis_level_by_ti_id(self, ti_id: int) -> float:
+        cursor = self.connection.cursor()
+
+        query = 'SELECT Ez ' \
+                'FROM minimal_energy ' \
+                f'WHERE time_intersection_id={ti_id};'
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def get_tsf_file_path_by_ti_id(self, ti_id: int) -> str:
+        cursor = self.connection.cursor()
+
+        query = 'SELECT gtf.path ' \
+                'FROM grav_tsf_files AS gtf ' \
+                'JOIN gravimeters AS g ON SUBSTR(g.number, -4)=gtf.dev_num_part ' \
+                'JOIN grav_dat_files AS gdf ON gtf.datetime_start < gdf.datetime_start AND gdf.datetime_stop <= gtf.datetime_stop AND gdf.gravimeter_id=g.id ' \
+                'JOIN grav_seis_time_intersections AS ti ON ti.grav_dat_id=gdf.id ' \
+                f'WHERE ti.id={ti_id};'
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def get_seis_file_path_by_ti_id(self, ti_id: int) -> str:
+        cursor = self.connection.cursor()
+
+        query = 'SELECT sf.path ' \
+                'FROM grav_seis_time_intersections AS ti ' \
+                'JOIN seis_files AS sf ON sf.id=ti.seis_id ' \
+                f'WHERE ti.id={ti_id};'
+        cursor.execute(query)
+        return cursor.fetchone()[0]
+
+    def get_quite_minute_start_by_ti_id(self, ti_id: int) -> datetime:
+        cursor = self.connection.cursor()
+
+        query = 'SELECT minute_index ' \
+                'FROM minimal_energy ' \
+                f'WHERE time_intersection_id={ti_id};'
+        cursor.execute(query)
+        minute_index = cursor.fetchone()[0]
+
+        query = 'SELECT datetime_start ' \
+                'FROM grav_seis_time_intersections ' \
+                f'WHERE id={ti_id};'
+        cursor.execute(query)
+        datetime_val = datetime.strptime(cursor.fetchone()[0],
+                                         '%Y-%m-%d %H:%M:%S')
+        return datetime_val + timedelta(minutes=minute_index)
 
     def get_seis_corrections_by_time_intersection_id(
             self, id_val: int) -> List[float]:
@@ -594,3 +714,23 @@ class SqliteDbase:
         cursor = self.connection.cursor()
         cursor.execute(query)
         return cursor.fetchone()[0]
+
+    def get_sensor_pair_info(self, ti_id: int) -> Tuple[str, str, str, str]:
+        query = 'SELECT st.name, g.number, s.number, sf.datetime_start ' \
+                'FROM grav_seis_time_intersections AS ti ' \
+                'JOIN seis_files AS sf ON sf.id=ti.seis_id ' \
+                'JOIN seismometers AS s ON s.id=sf.sensor_id ' \
+                'JOIN stations AS st ON st.id=sf.station_id ' \
+                'JOIN grav_dat_files AS gdf ON gdf.id=ti.grav_dat_id ' \
+                'JOIN gravimeters AS g ON g.id=gdf.gravimeter_id '\
+                f'WHERE ti.id={ti_id};'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        record = list(cursor.fetchone())
+        record[1] = str(int(record[1]))
+
+        datetime_val = datetime.strptime(record[3], '%Y-%m-%d %H:%M:%S')
+        date_str = datetime_val.strftime('%d.%m.%Y')
+        record[3] = date_str
+
+        return tuple(record)
