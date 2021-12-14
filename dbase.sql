@@ -62,15 +62,6 @@ CREATE TABLE grav_tsf_files(
     path TEXT UNIQUE NOT NULL
 );
 
-CREATE TABLE gravity_measures_seconds(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    grav_tsf_file_id INTEGER NOT NULL,
-    measure_index INTEGER NOT NULL,
-    src_value REAL NOT NULL DEFAULT 0,
-    UNIQUE(grav_tsf_file_id, measure_index),
-    FOREIGN KEY (grav_tsf_file_id) REFERENCES grav_tsf_files(id) ON DELETE CASCADE
-);
-
 CREATE TABLE seis_files(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     sensor_id INTEGER NOT NULL,
@@ -188,7 +179,7 @@ SELECT time_intersection_id, corr_grav as quite_grav_level
 FROM minimal_energy me
 JOIN grav_seis_time_intersections gsti ON me.time_intersection_id=gsti.id
 JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id=gsti.grav_dat_id
-WHERE gmm.datetime_val=datetime(strftime('%s', gsti.datetime_start)+(me.minute_index + 1) * 60, 'unixepoch');
+WHERE gmm.datetime_val=datetime(STRFTIME('%s', gsti.datetime_start)+(me.minute_index + 1) * 60, 'unixepoch');
 
 CREATE VIEW pre_correction
 AS
