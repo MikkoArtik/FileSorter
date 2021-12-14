@@ -3,7 +3,7 @@
 
 # IntelliJ project files
 .idea
+drafts
+venv
+
 *.iml
-out
-gen
-tmp.py
