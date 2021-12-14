@@ -2,9 +2,8 @@ import os
 from datetime import datetime
 from typing import List, NamedTuple, Set
 
-import openpyxl as xls
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl import load_workbook
+import xlrd
+from xlrd import open_workbook
 
 
 EXTRACT_COLUMNS = ['punkt__', 'datareis', 'd_g_finish', 'skp_otobr',
@@ -24,24 +23,24 @@ class ReportXLSTable:
         if not os.path.exists(path):
             raise OSError(f'Excel file {path} not found')
 
-        self.__workbook = load_workbook(filename=path)
+        self.__workbook = open_workbook(filename=path)
         self.__headers = []
         self.__report_data = self.__extract_data()
 
     @property
-    def workbook(self) -> xls.Workbook:
+    def workbook(self) -> xlrd.Book:
         return self.__workbook
 
     @property
-    def worksheet(self) -> Worksheet:
-        return self.workbook.worksheets[0]
+    def worksheet(self) -> xlrd.sheet.Sheet:
+        return self.workbook.sheets()[0]
 
     @property
     def headers(self) -> List[int]:
         if not self.__headers:
             headers = []
             for i in range(self.columns_count):
-                column_header = self.worksheet.cell(1, i + 1).value
+                column_header = self.worksheet.cell(0, i).value
                 if column_header == EXTRACT_COLUMNS[len(headers)]:
                     headers.append(i)
                 if len(headers) == len(EXTRACT_COLUMNS):
@@ -51,26 +50,26 @@ class ReportXLSTable:
 
     @property
     def rows_count(self) -> int:
-        return self.worksheet.max_row
+        return self.worksheet.nrows
 
     @property
     def columns_count(self) -> int:
-        return self.worksheet.max_column
+        return self.worksheet.ncols
 
     @property
     def data(self) -> List[TableRow]:
         return self.__report_data
 
     def __parse_row(self, row_index: int) -> TableRow:
-        src_vals = [self.worksheet.cell(row_index, x + 1).value for x in self.headers]
-        src_vals[0] = str(src_vals[0])
+        src_vals = [self.worksheet.cell(row_index, x).value for x in self.headers]
+        src_vals[0] = str(int(src_vals[0]))
         src_vals[1] = datetime.strptime(src_vals[1], '%Y-%m-%d')
         return TableRow(*src_vals)
 
     def __extract_data(self) -> List[TableRow]:
         extractions = []
         for i in range(1, self.rows_count):
-            extractions.append(self.__parse_row(i + 1))
+            extractions.append(self.__parse_row(i))
         return extractions
 
     def filter_rows_by_stations(self, rows: List[TableRow],
@@ -130,13 +129,13 @@ if __name__ == '__main__':
                 '11512', '12342', '44132', '50182', '60762', '70211']
     dates = ['2021-09-12', '2021-09-06', '2021-09-07']
 
-    root = '/media/michael/Data/TEMP/extracor'
-    export_folder = '/media/michael/Data/TEMP/extracor'
+    root = '/media/michael/Data/TEMP/reports'
+    export_folder = '/media/michael/Data/TEMP/reports'
 
     for root_folder, _, files in os.walk(root):
         for filename in files:
             extension = filename.split('.')[-1]
-            if extension != 'xlsx':
+            if extension.lower() != 'xls':
                 continue
 
             xls_path = os.path.join(root_folder, filename)
