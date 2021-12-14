@@ -193,7 +193,7 @@ WHERE gmm.datetime_val=datetime(strftime('%s', gsti.datetime_start)+(me.minute_i
 CREATE VIEW pre_correction
 AS
 SELECT gsti.id AS time_intersection_id, gmm.id AS grav_measure_id,
-       ROUND(gmm.corr_grav - gl.quite_grav_level, 4) AS grav_amplitude, Rz
+       ROUND(gl.quite_grav_level - gmm.corr_grav, 4) AS grav_amplitude, Rz
 FROM seis_energy se
 JOIN grav_seis_time_intersections gsti ON gsti.id=se.time_intersection_id
 JOIN minimal_energy me ON me.time_intersection_id=se.time_intersection_id
