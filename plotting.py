@@ -71,7 +71,7 @@ class Plot:
         fig.suptitle(self.title, fontname='Times New Roman', fontsize=16)
         return fig, axs
 
-    def plot_grav_minutes_data(self):
+    def add_src_grav_minutes_measures(self):
         subplot = self.subplots[0]
         subplot.set_title('Сводный график гравиметрических данных',
                           fontname='Times New Roman')
@@ -83,32 +83,46 @@ class Plot:
             alpha=1, linewidth=1.5,
             label='Исходное значение силы тяжести, мГал')
 
+    def add_corr_grav_minute_measures(self):
+        subplot = self.subplots[0]
+        x = [i for i in range(len(self.grav_data.src_minutes_measures))]
         corr_measures = [x[1] for x in self.grav_data.corr_minutes_measures]
         subplot.plot(
             x, corr_measures, color='lightcoral', alpha=1,
             label='Исправленное значение силы тяжести, мГал', linewidth=1.5)
 
+    def create_gravity_curve_filling(self):
+        subplot = self.subplots[0]
+        x = [i for i in range(len(self.grav_data.src_minutes_measures))]
+        src_measures = [x[1] for x in self.grav_data.src_minutes_measures]
+        corr_measures = [x[1] for x in self.grav_data.corr_minutes_measures]
+
         subplot.fill_between(x, src_measures, corr_measures,
                              alpha=0.1, color='green')
 
-        level_line = [(x[0], x[-1]), [self.grav_data.quite_level] * 2]
+    def add_gravity_quite_level(self):
+        subplot = self.subplots[0]
+        x_limits = 0, len(self.grav_data.src_minutes_measures) - 1
+        level_line = [x_limits, [self.grav_data.quite_level] * 2]
 
         subplot.plot(*level_line, linestyle='dashed', color='blueviolet',
                      alpha=0.5, linewidth=1.5,
                      label='Сейсмически тихий уровень')
 
+    def add_gravity_defect_info(self):
         bad_x_scatter, bad_y_scatter = [], []
         good_x_scatter, good_y_scatter = [], []
-        for i in range(len(x)):
-            is_bad = self.grav_data.src_minutes_measures[i][2]
+        for i in range(len(self.grav_data.src_minutes_measures)):
             grav_value = self.grav_data.src_minutes_measures[i][1]
+            is_bad = self.grav_data.src_minutes_measures[i][2]
             if is_bad:
-                bad_x_scatter.append(x[i])
+                bad_x_scatter.append(i)
                 bad_y_scatter.append(grav_value)
             else:
-                good_x_scatter.append(x[i])
+                good_x_scatter.append(i)
                 good_y_scatter.append(grav_value)
 
+        subplot = self.subplots[0]
         subplot.scatter(bad_x_scatter, bad_y_scatter, marker='^',
                         color='red', alpha=1, s=20,
                         label='Забракованные измерения')
@@ -116,8 +130,15 @@ class Plot:
                         marker='^', color='blue', alpha=1, s=20,
                         label='Принятые измерения к обработке')
 
+    def format_plot_gravity_minutes_measures(self):
+        subplot = self.subplots[0]
+        subplot.set_title('Сводный график гравиметрических данных',
+                          fontname='Times New Roman')
         subplot.grid(which='major', color='k', alpha=0.2)
-        subplot.set_xlim(x[0], x[-1])
+
+        x_limits = 0, len(self.grav_data.src_minutes_measures) - 1
+        subplot.set_xlim(*x_limits)
+
         subplot.xaxis.set_major_locator(ticker.MultipleLocator(1))
         subplot.set_xlabel('Индекс минуты измерений',
                            fontname='Times New Roman')
@@ -128,6 +149,16 @@ class Plot:
             ['{:.4f}'.format(x) for x in subplot.get_yticks()],
             fontname='Times New Roman')
         subplot.set_ylabel('Сила тяжести, мГал', fontname='Times New Roman')
+
+    def plot_grav_minutes_data(self):
+        self.add_src_grav_minutes_measures()
+        self.add_corr_grav_minute_measures()
+        self.create_gravity_curve_filling()
+
+        self.add_gravity_quite_level()
+        self.add_gravity_defect_info()
+
+        self.format_plot_gravity_minutes_measures()
 
     def get_seismic_energy_x_axis(self) -> List[int]:
         x_ticks = []
@@ -257,6 +288,7 @@ class Plot:
         self.plot_src_gravity_signal()
         self.plot_src_seismic_signal()
         plt.savefig(self.export_path)
+        plt.show()
         plt.close()
 
 
