@@ -288,8 +288,7 @@ class Plot:
         self.plot_src_gravity_signal()
         self.plot_src_seismic_signal()
         plt.savefig(self.export_path)
-        plt.show()
-        plt.close()
+        plt.close(self.figure)
 
 
 class Plotting:
