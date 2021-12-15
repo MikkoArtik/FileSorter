@@ -63,6 +63,8 @@ class Plot:
         return self.__axs
 
     def prepare(self):
+        plt.switch_backend('SVG')
+
         fig, axs = plt.subplots(4, 1)
         fig.set_size_inches(12, 16)
         fig.dpi = 150
@@ -287,7 +289,9 @@ class Plot:
         self.plot_seismic_energy()
         self.plot_src_gravity_signal()
         self.plot_src_seismic_signal()
-        plt.savefig(self.export_path)
+        plt.savefig(self.export_path, dpi=150)
+
+        self.figure.clear()
         plt.close(self.figure)
 
 
