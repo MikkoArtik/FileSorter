@@ -180,11 +180,13 @@ JOIN minimal_energy me ON se.time_intersection_id=me.time_intersection_id;
 
 CREATE VIEW grav_level
 AS
-SELECT time_intersection_id, corr_grav as quite_grav_level
-FROM minimal_energy me
+SELECT se.time_intersection_id, ROUND(AVG(gmm.corr_grav), 4) AS quite_grav_level
+FROM seis_energy AS se
+JOIN median_energy AS me ON me.time_intersection_id=se.time_intersection_id
 JOIN grav_seis_time_intersections gsti ON me.time_intersection_id=gsti.id
-JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id=gsti.grav_dat_id
-WHERE gmm.datetime_val=datetime(STRFTIME('%s', gsti.datetime_start)+(me.minute_index + 1) * 60, 'unixepoch');
+JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id=gsti.grav_dat_id AND gmm.datetime_val=DATETIME(STRFTIME('%s', gsti.datetime_start)+(se.minute_index + 1) * 60, 'unixepoch')
+WHERE se.Efull < me.Efull AND gmm.is_bad=0
+GROUP BY se.time_intersection_id;
 
 CREATE VIEW pre_correction
 AS
