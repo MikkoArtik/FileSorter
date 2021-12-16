@@ -168,13 +168,9 @@ WHERE g.filename NOT IN (
 
 CREATE VIEW minimal_energy
 AS
-SELECT time_intersection_id, minute_index, Ex, Ey, Ez, Efull
+SELECT time_intersection_id, minute_index, MIN(Ez) AS Ez
 FROM seis_energy se
-WHERE minute_index IN (SELECT (STRFTIME('%s', datetime_val) - STRFTIME('%s', (SELECT datetime_start FROM grav_seis_time_intersections WHERE id=time_intersection_id))) / 60 - 1
-FROM gravity_measures_minutes gmm
-WHERE grav_dat_file_id = (SELECT grav_dat_id FROM grav_seis_time_intersections gsti WHERE gsti.id=time_intersection_id) AND is_bad = 0)
-GROUP BY time_intersection_id
-HAVING Efull = MIN(Efull);
+GROUP BY time_intersection_id;
 
 CREATE VIEW energy_ratio
 AS
