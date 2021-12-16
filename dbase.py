@@ -282,7 +282,8 @@ class SqliteDbase:
         self.connection.cursor().execute(query)
         self.connection.commit()
 
-    def get_seismic_files_for_checking(self) -> List[Tuple[int, str, List[str]]]:
+    def get_seismic_files_for_checking(
+            self) -> List[Tuple[int, str, List[str]]]:
         query = 'SELECT * FROM need_check_seis_files;'
         cursor = self.connection.cursor()
         cursor.execute(query)
