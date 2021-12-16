@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import List, Tuple
 import logging
 
+import numpy as np
 from seiscore import BinaryFile
 from seiscore.functions.spectrum import spectrum
 from seiscore.functions.energy import spectrum_energy
@@ -148,11 +149,17 @@ class Processing:
         corrections = {}
         for record in self.dbase.get_pre_correction_data():
             time_intersection_id, grav_measure_id = record[:2]
-            amplitude, energy_ratio = record[2:]
-            correction_value = get_correction_value(amplitude, energy_ratio)
+            grav_level, measure_val, energy_ratio = record[2:]
+
+            amplitude = grav_level - measure_val
+            seis_correction = get_seis_correction(amplitude, energy_ratio)
+
+            corrected_val = measure_val + seis_correction
+            level_correction = get_level_correction(
+                measure_val, corrected_val, grav_level)
 
             vals = corrections.get(time_intersection_id, [])
-            vals.append((grav_measure_id, correction_value))
+            vals.append((grav_measure_id, level_correction))
             corrections[time_intersection_id] = vals
 
         for ti_id, vals in corrections.items():
