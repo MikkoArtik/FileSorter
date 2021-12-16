@@ -371,6 +371,10 @@ class SqliteDbase:
     def delete_all_energies(self):
         query = 'DELETE FROM seis_energy;'
         self.connection.cursor().execute(query)
+
+        query = 'DELETE FROM median_energy;'
+        self.connection.cursor().execute(query)
+
         self.connection.commit()
 
     def get_seis_file_path_by_id(self, id_val: int) -> Union[str, None]:
@@ -398,6 +402,20 @@ class SqliteDbase:
                 minute_index=index, e_x=energy_xyzf[0], e_y=energy_xyzf[1],
                 e_z=energy_xyzf[2], e_f=energy_xyzf[3])
             cursor.execute(query)
+        self.connection.commit()
+
+    def add_median_energies(self, time_intersection_id: int,
+                            energies: List[float]):
+        query_template = 'INSERT INTO median_energy(time_intersection_id, ' \
+                         'Ex, Ey, Ez, Efull) ' \
+                         'VALUES ({time_intersection_id}, ' \
+                         '{e_x}, {e_y}, {e_z}, {e_f});'
+        cursor = self.connection.cursor()
+        query = query_template.format(
+            time_intersection_id=time_intersection_id,
+            e_x=energies[0], e_y=energies[1], e_z=energies[2],
+            e_f=energies[3])
+        cursor.execute(query)
         self.connection.commit()
 
     def get_pre_correction_data(
