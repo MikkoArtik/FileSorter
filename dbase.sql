@@ -174,8 +174,7 @@ GROUP BY time_intersection_id;
 
 CREATE VIEW energy_ratio
 AS
-SELECT se.time_intersection_id, se.minute_index,
-       se.Ex/me.Ex AS Rx, se.Ey/me.Ey AS Ry, se.Ez/me.Ez AS Rz
+SELECT se.time_intersection_id, se.minute_index, se.Ez/me.Ez AS Rz
 FROM seis_energy se
 JOIN minimal_energy me ON se.time_intersection_id=me.time_intersection_id;
 
