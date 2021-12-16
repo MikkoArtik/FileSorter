@@ -617,14 +617,17 @@ class SqliteDbase:
         return [x[1] for x in
                 sorted(list(result.items()), key=lambda x: x[0])]
 
-    def get_grav_level_by_ti_id(self, ti_id: int) -> float:
+    def get_grav_level_by_ti_id(self, ti_id: int) -> Union[float, None]:
         cursor = self.connection.cursor()
 
         query = 'SELECT quite_grav_level ' \
                 'FROM grav_level ' \
                 f'WHERE time_intersection_id={ti_id};'
         cursor.execute(query)
-        return cursor.fetchone()[0]
+        record = cursor.fetchone()
+        if not record:
+            return None
+        return record[0]
 
     def get_seis_energy_by_ti_id(self,
                                  ti_id: int) -> List[Tuple[datetime, float]]:
