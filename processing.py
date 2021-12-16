@@ -108,6 +108,14 @@ class Processing:
         self.logger.debug(f'Energy calculation for {seis_file_path} finished')
         return energies
 
+    def get_median_energies(
+            self, component_energies: List[List[float]]) -> List[float]:
+        medians = []
+        for i in range(len(component_energies[0])):
+            enegry_vals = [x[i] for x in component_energies]
+            medians.append(float(np.median(enegry_vals)))
+        return medians
+
     def save_energies(self):
         self.dbase.delete_all_energies()
         records = self.dbase.get_grav_seis_time_intersections()
@@ -117,7 +125,11 @@ class Processing:
             filepath = self.dbase.get_seis_file_path_by_id(seis_file_id)
             energies = self.get_energies(filepath, min_datetime,
                                          max_datetime)
+            median_energies = self.get_median_energies(energies)
+
             self.dbase.add_energies(pair_id, energies)
+            self.dbase.add_median_energies(pair_id, median_energies)
+
             self.logger.debug(f'Remain - {len(records) - i - 1} files')
 
     def add_corrections(self):
