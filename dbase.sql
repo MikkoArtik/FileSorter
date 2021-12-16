@@ -102,6 +102,16 @@ CREATE TABLE seis_energy(
     FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
 );
 
+CREATE TABLE median_energy(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    time_intersection_id INTEGER NOT NULL,
+    Ex REAL NOT NULL DEFAULT 0,
+    Ey REAL NOT NULL DEFAULT 0,
+    Ez REAL NOT NULL DEFAULT 0,
+    Efull REAL NOT NULL DEFAULT 0,
+    FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
+);
+
 CREATE TABLE corrections(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     time_intersection_id INTEGER NOT NULL,
