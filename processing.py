@@ -48,7 +48,7 @@ def get_level_correction(source_val: float, corrected_val: float,
         new_val = corrected_val
     else:
         new_val = level_val - source_val + corrected_val
-    return new_val - source_val
+    return round(new_val - source_val, 4)
 
 
 def format_correction_filename(
