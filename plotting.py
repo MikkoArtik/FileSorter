@@ -261,7 +261,6 @@ class Plot:
         subplot.set_xlabel('Время, с', fontname='Times New Roman')
         subplot.set_ylabel('Амплитуда, усл. ед', fontname='Times New Roman')
 
-        self.plot_quite_minute()
         subplot.legend(prop={'family': 'Times New Roman'}, loc='center',
                        bbox_to_anchor=(0.5, -0.2), shadow=False, ncol=2)
 
