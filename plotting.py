@@ -329,6 +329,8 @@ class Plotting:
         corr_grav_m = [(x[0], x[1] + corr_val[i]) for i, x in
                        enumerate(src_grav_m)]
         quite_level = self.dbase.get_grav_level_by_ti_id(ti_id)
+        if not quite_level:
+            return
 
         tsf_file_path = self.dbase.get_tsf_file_path_by_ti_id(ti_id)
         tsf_data = TSFile(tsf_file_path)
