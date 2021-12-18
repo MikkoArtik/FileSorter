@@ -37,7 +37,7 @@ def get_intersection_time(grav_time: datetime, seis_time: datetime,
 
 
 def get_seis_correction(grav_ampl: float, energy_ratio: float) -> float:
-    return round(grav_ampl * (1 - 1 / energy_ratio ** 2), 4)
+    return round(grav_ampl * (1 - 1 / energy_ratio ** 0.5), 4)
 
 
 def get_level_correction(source_val: float, corrected_val: float,
