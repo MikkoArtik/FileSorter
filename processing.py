@@ -14,6 +14,8 @@ from dbase import SqliteDbase
 
 
 EXPORT_CORRECTIONS_FOLDER_NAME = 'corrections'
+SEIS_CORRECTION_TYPE = 'seis'
+LEVEL_CORRECTION_TYPE = 'level'
 
 
 def get_intersection_time(grav_time: datetime, seis_time: datetime,
@@ -144,7 +146,25 @@ class Processing:
 
             self.logger.debug(f'Remain - {len(records) - i - 1} files')
 
-    def add_corrections(self):
+    def add_seis_corrections(self):
+        self.dbase.clear_corrections()
+        corrections = {}
+        for record in self.dbase.get_pre_correction_data():
+            time_intersection_id, grav_measure_id = record[:2]
+            grav_level, measure_val, energy_ratio = record[2:]
+
+            amplitude = grav_level - measure_val
+            seis_correction = get_seis_correction(amplitude, energy_ratio)
+
+            vals = corrections.get(time_intersection_id, [])
+            vals.append((grav_measure_id, seis_correction))
+
+            corrections[time_intersection_id] = vals
+
+        for ti_id, vals in corrections.items():
+            self.dbase.add_seis_corrections(ti_id, vals)
+
+    def add_level_corrections(self):
         self.dbase.clear_corrections()
         corrections = {}
         for record in self.dbase.get_pre_correction_data():
@@ -160,6 +180,7 @@ class Processing:
 
             vals = corrections.get(time_intersection_id, [])
             vals.append((grav_measure_id, level_correction))
+
             corrections[time_intersection_id] = vals
 
         for ti_id, vals in corrections.items():
@@ -251,12 +272,24 @@ class Processing:
                 self.save_corrections(export_folder, correction_filename,
                                       chain_corrections)
 
-    def run(self):
-        self.set_intersection_times()
-        self.save_energies()
-        self.add_corrections()
-        self.export_corrections()
+    def recalc_corrections(self, correction_type=SEIS_CORRECTION_TYPE):
+        if correction_type not in {SEIS_CORRECTION_TYPE,
+                                   LEVEL_CORRECTION_TYPE}:
+            raise RuntimeError('Invalid setting correction type')
 
-    def recalc_corrections(self):
         self.save_energies()
-        self.add_corrections()
+        if correction_type == SEIS_CORRECTION_TYPE:
+            self.add_seis_corrections()
+        elif correction_type == LEVEL_CORRECTION_TYPE:
+            self.add_level_corrections()
+        else:
+            pass
+
+    def run(self, correction_type=SEIS_CORRECTION_TYPE):
+        if correction_type not in {SEIS_CORRECTION_TYPE,
+                                   LEVEL_CORRECTION_TYPE}:
+            raise RuntimeError('Invalid setting correction type')
+
+        self.set_intersection_times()
+        self.recalc_corrections()
+        self.export_corrections()
