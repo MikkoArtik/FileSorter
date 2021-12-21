@@ -75,8 +75,8 @@ class Processing:
         return os.path.join(
             self.config.export_root, EXPORT_CORRECTIONS_FOLDER_NAME)
 
-    def set_intersection_times(self):
-        self.dbase.clear_grav_seis_time_intersections()
+    def add_measure_pair(self):
+        self.dbase.clear_measure_pairs()
         grav_seis_pairs = self.dbase.get_grav_seis_pairs()
         for grav_id, seis_id, *times in grav_seis_pairs:
             grav_dt_start, grav_dt_stop = times[:2]
@@ -87,7 +87,7 @@ class Processing:
             right_limit = get_intersection_time(grav_dt_stop, seis_dt_stop,
                                                 'right')
             if left_limit < right_limit:
-                self.dbase.add_grav_seis_time_intersection(
+                self.dbase.add_measure_pair(
                     grav_id, seis_id, left_limit, right_limit)
 
     def get_energies(self, seis_file_path: str, datetime_min: datetime,
@@ -132,7 +132,7 @@ class Processing:
 
     def save_energies(self):
         self.dbase.delete_all_energies()
-        records = self.dbase.get_grav_seis_time_intersections()
+        records = self.dbase.get_measure_pairs()
         for i, record in enumerate(records):
             pair_id, seis_file_id = record[0], record[2]
             min_datetime, max_datetime = record[3:5]
@@ -290,6 +290,6 @@ class Processing:
                                    LEVEL_CORRECTION_TYPE}:
             raise RuntimeError('Invalid setting correction type')
 
-        self.set_intersection_times()
+        self.add_measure_pair()
         self.recalc_corrections()
         self.export_corrections()
