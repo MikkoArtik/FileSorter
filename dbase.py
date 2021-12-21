@@ -277,7 +277,7 @@ class SqliteDbase:
         cursor.execute(query)
         id_val = cursor.fetchone()[0]
 
-        query = f'INSERT INTO seis_files_defect_info(seis_id) ' \
+        query = f'INSERT INTO seis_files_defect_info(seis_file_id) ' \
                 f'VALUES ({id_val});'
         self.connection.cursor().execute(query)
         self.connection.commit()
