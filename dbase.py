@@ -41,7 +41,7 @@ class SqliteDbase:
                   chain_path: str, cycle_path: str) -> int:
         query = 'INSERT INTO chains(dev_num_part, chain_path, cycle_path) ' \
                 f'VALUES (\'{sensor_part_name}\', \'{chain_path}\', ' \
-                f'\'{cycle_path}\')'
+                f'\'{cycle_path}\');'
         cursor = self.connection.cursor()
         try:
             cursor.execute(query)
@@ -58,9 +58,9 @@ class SqliteDbase:
                          f'sensor_part_name={sensor_part_name} id={id_val}')
         return id_val
 
-    def add_link(self, chain_id: int, order: int, filename: str) -> int:
+    def add_link(self, chain_id: int, link_index: int, filename: str) -> int:
         query = 'INSERT INTO links(chain_id, link_index, filename) VALUES ' \
-                f'({chain_id}, {order}, \'{filename}\');'
+                f'({chain_id}, {link_index}, \'{filename}\');'
         cursor = self.connection.cursor()
         try:
             cursor.execute(query)
@@ -72,7 +72,7 @@ class SqliteDbase:
         query = f'SELECT id FROM links ' \
                 f'WHERE filename=\'{filename}\' AND chain_id={chain_id};'
         id_val = cursor.execute(query).fetchone()[0]
-        self.logger.info(f'link: filename={filename} order={order} '
+        self.logger.info(f'link: filename={filename} order={link_index} '
                          f'chain_id={chain_id} id={id_val}')
         return id_val
 
@@ -215,8 +215,9 @@ class SqliteDbase:
     def add_gravity_second_measures(self, tsf_file_id: int,
                                     measures: List[Tuple[int, int]]):
         query_template = 'INSERT INTO gravity_measures_seconds (' \
-                         'grav_tsf_file_id, measure_index, src_value) VALUES ' \
-                         '({tsf_file_id}, \'{measure_index}\', {src_value});'
+                         'grav_tsf_file_id, measure_index, src_value) ' \
+                         'VALUES ({tsf_file_id}, \'{measure_index}\', ' \
+                         '{src_value});'
         cursor = self.connection.cursor()
         for measure_index, value in enumerate(measures):
             datetime_val, src_value = value
@@ -237,7 +238,7 @@ class SqliteDbase:
         is_bad_val = 1 if is_bad else 0
         query = f'UPDATE gravity_measures_minutes SET is_bad={is_bad_val} ' \
                 f'WHERE grav_dat_file_id={grav_dat_file_id} AND ' \
-                f'datetime_val=datetime(strftime(\'%s\', ' \
+                f'datetime_val=datetime(STRFTIME(\'%s\', ' \
                 f'(SELECT datetime_start FROM grav_dat_files ' \
                 f'WHERE id={grav_dat_file_id}))+ {cycle_index} * 60,' \
                 f'\'unixepoch\');'
@@ -282,8 +283,8 @@ class SqliteDbase:
         self.connection.cursor().execute(query)
         self.connection.commit()
 
-    def get_seismic_files_for_checking(
-            self) -> List[Tuple[int, str, List[str]]]:
+    def get_seismic_files_for_checking(self) -> List[Tuple[int, str,
+                                                           List[str]]]:
         query = 'SELECT * FROM need_check_seis_files;'
         cursor = self.connection.cursor()
         cursor.execute(query)
@@ -319,8 +320,8 @@ class SqliteDbase:
         self.connection.cursor().execute(query)
         self.connection.commit()
 
-    def clear_grav_seis_time_intersections(self):
-        query = 'DELETE FROM grav_seis_time_intersections;'
+    def clear_measure_pairs(self):
+        query = 'DELETE FROM measure_pairs;'
         self.connection.cursor().execute(query)
         self.connection.commit()
 
@@ -339,11 +340,11 @@ class SqliteDbase:
             records.append(record)
         return records
 
-    def add_grav_seis_time_intersection(self, grav_dat_id: int, seis_id,
-                                        datetime_left: datetime,
-                                        datetime_right: datetime):
-        query = 'INSERT INTO grav_seis_time_intersections(grav_dat_id, ' \
-                'seis_id, datetime_start, datetime_stop) VALUES (' \
+    def add_measure_pair(self, grav_dat_id: int, seis_id,
+                         datetime_left: datetime,
+                         datetime_right: datetime):
+        query = 'INSERT INTO measure_pairs(grav_dat_file_id, ' \
+                'seis_file_id, datetime_start, datetime_stop) VALUES (' \
                 f'{grav_dat_id}, {seis_id}, \'{datetime_left}\', ' \
                 f'\'{datetime_right}\');'
         try:
@@ -353,9 +354,9 @@ class SqliteDbase:
         except sqlite3.IntegrityError:
             self.logger.error(f'Fail adding time intersection')
 
-    def get_grav_seis_time_intersections(self) -> List[Tuple[int, int, int,
-                                                             datetime, datetime]]:
-        query = 'SELECT * FROM grav_seis_time_intersections;'
+    def get_measure_pairs(self) -> List[Tuple[int, int, int, datetime,
+                                              datetime]]:
+        query = 'SELECT * FROM measure_pairs;'
         cursor = self.connection.cursor()
         cursor.execute(query)
         src_data = [list(x) for x in cursor.fetchall()]
@@ -390,30 +391,29 @@ class SqliteDbase:
             self.logger.info(f'Seismic file: id={id_val} path={record[0]}')
             return record[0]
 
-    def add_energies(self, time_intersection_id: int,
-                     energies: List[List[float]]):
-        query_template = 'INSERT INTO seis_energy(time_intersection_id, ' \
+    def add_energies(self, measure_pair_id: int, energies: List[List[float]]):
+        query_template = 'INSERT INTO seis_energy(measure_pair_id, ' \
                          'minute_index, Ex, Ey, Ez, Efull) ' \
-                         'VALUES ({time_intersection_id}, {minute_index}, ' \
+                         'VALUES ({measure_pair_id}, {minute_index}, ' \
                          '{e_x}, {e_y}, {e_z}, {e_f});'
         cursor = self.connection.cursor()
         for index, energy_xyzf in enumerate(energies):
             query = query_template.format(
-                time_intersection_id=time_intersection_id,
+                measure_pair_id=measure_pair_id,
                 minute_index=index, e_x=energy_xyzf[0], e_y=energy_xyzf[1],
                 e_z=energy_xyzf[2], e_f=energy_xyzf[3])
             cursor.execute(query)
         self.connection.commit()
 
-    def add_median_energies(self, time_intersection_id: int,
+    def add_median_energies(self, measure_pair_id: int,
                             energies: List[float]):
-        query_template = 'INSERT INTO median_energy(time_intersection_id, ' \
+        query_template = 'INSERT INTO median_energy(measure_pair_id, ' \
                          'Ex, Ey, Ez, Efull) ' \
-                         'VALUES ({time_intersection_id}, ' \
+                         'VALUES ({measure_pair_id}, ' \
                          '{e_x}, {e_y}, {e_z}, {e_f});'
         cursor = self.connection.cursor()
         query = query_template.format(
-            time_intersection_id=time_intersection_id,
+            measure_pair_id=measure_pair_id,
             e_x=energies[0], e_y=energies[1], e_z=energies[2],
             e_f=energies[3])
         cursor.execute(query)
@@ -431,17 +431,17 @@ class SqliteDbase:
         self.connection.cursor().execute(query)
         self.connection.commit()
 
-    def add_single_correction(self, time_intersection_id: int,
+    def add_single_correction(self, measure_pair_id: int,
                               grav_measure_id: int, seis_correction: float):
-        query = 'INSERT INTO corrections(time_intersection_id, ' \
+        query = 'INSERT INTO corrections(measure_pair_id, ' \
                 'grav_measure_id, seis_corr) VALUES (' \
-                f'{time_intersection_id}, {grav_measure_id}, {seis_correction});'
+                f'{measure_pair_id}, {grav_measure_id}, {seis_correction});'
         self.connection.cursor().execute(query)
 
-    def add_seis_corrections(self, time_intersection_id: int,
+    def add_seis_corrections(self, measure_pair_id: int,
                              corrections: List[Tuple[int, float]]):
         for grav_measure_id, correction_val in corrections:
-            self.add_single_correction(time_intersection_id, grav_measure_id,
+            self.add_single_correction(measure_pair_id, grav_measure_id,
                                        correction_val)
         self.connection.commit()
 
@@ -506,7 +506,7 @@ class SqliteDbase:
         query = 'SELECT cycle_index, is_bad, seis_corr ' \
                 'FROM post_correction ' \
                 f'WHERE chain_id={chain_id} AND link_id={link_id} AND ' \
-                f'time_intersection_id=(SELECT time_intersection_id FROM ' \
+                f'measure_pair_id=(SELECT measure_pair_id FROM ' \
                 f'sensor_pairs AS sp WHERE sp.chain_id={chain_id} AND ' \
                 f'sp.link_id={link_id} AND ' \
                 f'sp.seismometer_id={seismometer_id} AND ' \
@@ -572,16 +572,15 @@ class SqliteDbase:
         records = cursor.fetchall()
         return [x[0] for x in records]
 
-    def get_grav_minute_measures_by_ti_id(
-            self, ti_id: int) -> List[Tuple[datetime, float, bool]]:
+    def get_grav_minute_measures(
+            self, measure_pair_id: int) -> List[Tuple[datetime, float, bool]]:
         cursor = self.connection.cursor()
 
         query = 'SELECT datetime_val, corr_grav, is_bad ' \
                 'FROM gravity_measures_minutes ' \
                 'WHERE grav_dat_file_id=(' \
-                '   SELECT grav_dat_id ' \
-                '   FROM grav_seis_time_intersections' \
-                f'   WHERE id={ti_id});'
+                '   SELECT grav_dat_file_id ' \
+                f'   FROM measure_pairs WHERE id={measure_pair_id});'
 
         cursor.execute(query)
         result = []
@@ -591,15 +590,15 @@ class SqliteDbase:
             result.append((dt_val, rec[1], is_bad))
         return result
 
-    def get_seis_corrections_by_ti_id(self, ti_id: int) -> List[float]:
+    def get_seis_corrections(self, measure_pair_id: int) -> List[float]:
         cursor = self.connection.cursor()
 
         query = 'SELECT id ' \
                 'FROM gravity_measures_minutes ' \
                 'WHERE grav_dat_file_id=(' \
-                '   SELECT grav_dat_id ' \
-                '   FROM grav_seis_time_intersections' \
-                f'   WHERE id={ti_id});'
+                '   SELECT grav_dat_file_id ' \
+                '   FROM measure_pairs' \
+                f'  WHERE id={measure_pair_id});'
         cursor.execute(query)
         result = dict()
         for rec in cursor.fetchall():
@@ -608,7 +607,7 @@ class SqliteDbase:
 
         query = 'SELECT grav_measure_id, seis_corr ' \
                 'FROM corrections ' \
-                f'WHERE time_intersection_id={ti_id};'
+                f'WHERE measure_pair_id={measure_pair_id};'
         cursor.execute(query)
         for rec in cursor.fetchall():
             id_val, corr_val = rec
@@ -617,25 +616,25 @@ class SqliteDbase:
         return [x[1] for x in
                 sorted(list(result.items()), key=lambda x: x[0])]
 
-    def get_grav_level_by_ti_id(self, ti_id: int) -> Union[float, None]:
+    def get_grav_level(self, measure_pair_id: int) -> Union[float, None]:
         cursor = self.connection.cursor()
 
         query = 'SELECT quite_grav_level ' \
                 'FROM grav_level ' \
-                f'WHERE time_intersection_id={ti_id};'
+                f'WHERE measure_pair_id={measure_pair_id};'
         cursor.execute(query)
         record = cursor.fetchone()
         if not record:
             return None
         return record[0]
 
-    def get_seis_energy_by_ti_id(self,
-                                 ti_id: int) -> List[Tuple[datetime, float]]:
+    def get_seis_energy(self,
+                        measure_pair_id: int) -> List[Tuple[datetime, float]]:
         cursor = self.connection.cursor()
 
         query = 'SELECT datetime_start ' \
-                'FROM grav_seis_time_intersections ' \
-                f'WHERE id={ti_id};'
+                'FROM measure_pairs ' \
+                f'WHERE id={measure_pair_id};'
         cursor.execute(query)
 
         datetime_start = datetime.strptime(cursor.fetchone()[0],
@@ -643,7 +642,7 @@ class SqliteDbase:
 
         query = 'SELECT minute_index, Ez ' \
                 'FROM seis_energy ' \
-                f'WHERE time_intersection_id={ti_id} ' \
+                f'WHERE measure_pair_id={measure_pair_id} ' \
                 'ORDER BY minute_index ASC;'
         cursor.execute(query)
 
@@ -654,73 +653,53 @@ class SqliteDbase:
             energy_vals.append((datetime_val, e_z))
         return energy_vals
 
-    def get_seis_level_by_ti_id(self, ti_id: int) -> float:
+    def get_seis_level(self, measure_pair_id: int) -> float:
         cursor = self.connection.cursor()
 
         query = 'SELECT Ez ' \
                 'FROM minimal_energy ' \
-                f'WHERE time_intersection_id={ti_id};'
+                f'WHERE measure_pair_id={measure_pair_id};'
         cursor.execute(query)
         return cursor.fetchone()[0]
 
-    def get_tsf_file_path_by_ti_id(self, ti_id: int) -> str:
+    def get_tsf_file_path(self, measure_pair_id: int) -> str:
         cursor = self.connection.cursor()
 
         query = 'SELECT gtf.path ' \
                 'FROM grav_tsf_files AS gtf ' \
                 'JOIN gravimeters AS g ON SUBSTR(g.number, -4)=gtf.dev_num_part ' \
                 'JOIN grav_dat_files AS gdf ON gtf.datetime_start < gdf.datetime_start AND gdf.datetime_stop <= gtf.datetime_stop AND gdf.gravimeter_id=g.id ' \
-                'JOIN grav_seis_time_intersections AS ti ON ti.grav_dat_id=gdf.id ' \
-                f'WHERE ti.id={ti_id};'
+                'JOIN measure_pairs AS mp ON mp.grav_dat_file_id=gdf.id ' \
+                f'WHERE mp.id={measure_pair_id};'
         cursor.execute(query)
         return cursor.fetchone()[0]
 
-    def get_seis_file_path_by_ti_id(self, ti_id: int) -> str:
+    def get_seis_file_path(self, measure_pair_id: int) -> str:
         cursor = self.connection.cursor()
 
         query = 'SELECT sf.path ' \
-                'FROM grav_seis_time_intersections AS ti ' \
-                'JOIN seis_files AS sf ON sf.id=ti.seis_id ' \
-                f'WHERE ti.id={ti_id};'
+                'FROM measure_pairs AS mp ' \
+                'JOIN seis_files AS sf ON sf.id=mp.seis_file_id ' \
+                f'WHERE mp.id={measure_pair_id};'
         cursor.execute(query)
         return cursor.fetchone()[0]
 
-    def get_quite_minute_start_by_ti_id(self, ti_id: int) -> datetime:
+    def get_quite_minute_start(self, measure_pair_id: int) -> datetime:
         cursor = self.connection.cursor()
 
         query = 'SELECT minute_index ' \
                 'FROM minimal_energy ' \
-                f'WHERE time_intersection_id={ti_id};'
+                f'WHERE measure_pair_id={measure_pair_id};'
         cursor.execute(query)
         minute_index = cursor.fetchone()[0]
 
         query = 'SELECT datetime_start ' \
-                'FROM grav_seis_time_intersections ' \
-                f'WHERE id={ti_id};'
+                'FROM measure_pairs ' \
+                f'WHERE id={measure_pair_id};'
         cursor.execute(query)
         datetime_val = datetime.strptime(cursor.fetchone()[0],
                                          '%Y-%m-%d %H:%M:%S')
         return datetime_val + timedelta(minutes=minute_index)
-
-    def get_seis_corrections_by_time_intersection_id(
-            self, id_val: int) -> List[float]:
-        query = 'SELECT seis_corr FROM corrections ' \
-                'WHERE minute_id IN (SELECT id FROM minutes_intersection ' \
-                f'WHERE time_intersection_id={id_val});'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        return [x[0] for x in cursor.fetchall()]
-
-    def get_start_datetime_gravity_measures_by_time_intersection_id(
-            self, id_val: int) -> datetime:
-        query = 'SELECT datetime_start FROM dat_files ' \
-                'WHERE id=(SELECT grav_dat_id FROM time_intersection ' \
-                f'WHERE id={id_val});'
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-
-        record = cursor.fetchone()[0]
-        return datetime.strptime(record, '%Y-%m-%d %H:%M:%S')
 
     def get_start_datetime_intersection_info_by_id(
             self, id_val: int) -> datetime:
@@ -738,15 +717,16 @@ class SqliteDbase:
         cursor.execute(query)
         return cursor.fetchone()[0]
 
-    def get_sensor_pair_info(self, ti_id: int) -> Tuple[str, str, str, str]:
+    def get_sensor_pair_info(self, measure_pair_id: int) -> Tuple[str, str,
+                                                                  str, str]:
         query = 'SELECT st.name, g.number, s.number, sf.datetime_start ' \
-                'FROM grav_seis_time_intersections AS ti ' \
-                'JOIN seis_files AS sf ON sf.id=ti.seis_id ' \
+                'FROM measure_pairs AS mp ' \
+                'JOIN seis_files AS sf ON sf.id=mp.seis_file_id ' \
                 'JOIN seismometers AS s ON s.id=sf.sensor_id ' \
                 'JOIN stations AS st ON st.id=sf.station_id ' \
-                'JOIN grav_dat_files AS gdf ON gdf.id=ti.grav_dat_id ' \
+                'JOIN grav_dat_files AS gdf ON gdf.id=mp.grav_dat_file_id ' \
                 'JOIN gravimeters AS g ON g.id=gdf.gravimeter_id ' \
-                f'WHERE ti.id={ti_id};'
+                f'WHERE mp.id={measure_pair_id};'
         cursor = self.connection.cursor()
         cursor.execute(query)
         record = list(cursor.fetchone())
