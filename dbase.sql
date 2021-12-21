@@ -70,7 +70,8 @@ CREATE TABLE seis_files(
     datetime_stop DATETIME NOT NULL,
     path TEXT UNIQUE NOT NULL,
     FOREIGN KEY(sensor_id) REFERENCES seismometers(id),
-    FOREIGN KEY(station_id) REFERENCES stations(id));
+    FOREIGN KEY(station_id) REFERENCES stations(id)
+);
 
 CREATE TABLE seis_files_defect_info(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
