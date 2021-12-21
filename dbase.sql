@@ -75,21 +75,21 @@ CREATE TABLE seis_files(
 
 CREATE TABLE seis_files_defect_info(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    seis_id INTEGER NOT NULL,
+    seis_file_id INTEGER NOT NULL,
     x_channel VARCHAR(10) CHECK(x_channel IN ('Good', 'Bad', 'Unknown')) DEFAULT 'Unknown',
     y_channel VARCHAR(10) CHECK(x_channel IN ('Good', 'Bad', 'Unknown')) DEFAULT 'Unknown',
     z_channel VARCHAR(10) CHECK(x_channel IN ('Good', 'Bad', 'Unknown')) DEFAULT 'Unknown',
-    FOREIGN KEY (seis_id) REFERENCES seis_files(id)
+    FOREIGN KEY (seis_file_id) REFERENCES seis_files(id)
 );
 
 CREATE TABLE grav_seis_time_intersections(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    grav_dat_id INTEGER NOT NULL,
-    seis_id INTEGER NOT NULL,
+    grav_dat_file_id INTEGER NOT NULL,
+    seis_file_id INTEGER NOT NULL,
     datetime_start DATETIME NOT NULL,
     datetime_stop DATETIME NOT NULL,
-    FOREIGN KEY(grav_dat_id) REFERENCES dat_files(id),
-    FOREIGN KEY(seis_id) REFERENCES seis_files(id)
+    FOREIGN KEY(grav_dat_file_id) REFERENCES grav_dat_files(id),
+    FOREIGN KEY(seis_file_id) REFERENCES seis_files(id)
 );
 
 CREATE TABLE seis_energy(
@@ -127,7 +127,7 @@ CREATE VIEW need_check_seis_files
 AS
 SELECT sf.id, sf.path, di.x_channel, di.y_channel, di.z_channel
 FROM seis_files AS sf
-JOIN seis_files_defect_info AS di ON sf.id=di.seis_id
+JOIN seis_files_defect_info AS di ON sf.id=di.seis_file_id
 WHERE (di.x_channel='Unknown' OR di.y_channel='Unknown' OR di.z_channel='Unknown') AND
       (di.x_channel!='Bad' AND di.y_channel!='Bad' AND di.z_channel!='Bad');
 
@@ -135,7 +135,7 @@ CREATE VIEW good_seis_files
 AS
 SELECT sf.id
 FROM seis_files AS sf
-JOIN seis_files_defect_info AS di ON sf.id=di.seis_id
+JOIN seis_files_defect_info AS di ON sf.id=di.seis_file_id
 WHERE di.x_channel NOT IN ('Bad', 'Unknown') AND
       di.y_channel NOT IN ('Bad', 'Unknown') AND
       di.z_channel NOT IN ('Bad', 'Unknown');
@@ -151,9 +151,9 @@ WHERE c.id NOT IN (SELECT DISTINCT chain_id
 
 CREATE VIEW grav_seis_pairs
 AS
-SELECT g.id AS grav_id, s.id AS seis_id, g.datetime_start AS grav_dt_start,
-g.datetime_stop AS grav_dt_stop, s.datetime_start AS seis_datetime_start,
-s.datetime_stop AS seis_datetime_stop
+SELECT g.id AS grav_id, s.id AS seis_file_id, g.datetime_start AS grav_dt_start,
+g.datetime_stop AS grav_dt_stop, s.datetime_start AS seis_dt_start,
+s.datetime_stop AS seis_dt_stop
 FROM grav_dat_files AS g
 JOIN seis_files AS s ON g.station_id = s.station_id AND
     MAX(g.datetime_start, s.datetime_start) < MIN(g.datetime_stop, s.datetime_stop)
