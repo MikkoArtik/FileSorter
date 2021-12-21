@@ -313,8 +313,8 @@ class Plotting:
         if not os.path.exists(self.export_folder_path):
             os.makedirs(self.export_folder_path)
 
-    def generate_filename(self, ti_id: int) -> str:
-        info = self.dbase.get_sensor_pair_info(ti_id)
+    def generate_filename(self, measure_pair_id: int) -> str:
+        info = self.dbase.get_sensor_pair_info(measure_pair_id)
         return '_'.join(info).replace('.', '-') + '.png'
 
     def generate_title(self, ti_id: int) -> str:
@@ -323,34 +323,34 @@ class Plotting:
                 f'{info[1]} сейсмометр {info[2]} дата {info[3]})'
         return title
 
-    def create_plot(self, ti_id: int):
-        src_grav_m = self.dbase.get_grav_minute_measures_by_ti_id(ti_id)
-        corr_val = self.dbase.get_seis_corrections_by_ti_id(ti_id)
+    def create_plot(self, measure_pair_id: int):
+        src_grav_m = self.dbase.get_grav_minute_measures(measure_pair_id)
+        corr_val = self.dbase.get_seis_corrections(measure_pair_id)
         corr_grav_m = [(x[0], x[1] + corr_val[i]) for i, x in
                        enumerate(src_grav_m)]
-        quite_level = self.dbase.get_grav_level_by_ti_id(ti_id)
+        quite_level = self.dbase.get_grav_level(measure_pair_id)
         if not quite_level:
             return
 
-        tsf_file_path = self.dbase.get_tsf_file_path_by_ti_id(ti_id)
+        tsf_file_path = self.dbase.get_tsf_file_path(measure_pair_id)
         tsf_data = TSFile(tsf_file_path)
         src_seconds_measures = tsf_data.src_signal
 
         grav_data = GravityData(quite_level, src_grav_m, src_seconds_measures,
                                 corr_grav_m)
 
-        seis_energy = self.dbase.get_seis_energy_by_ti_id(ti_id)
-        seis_level = self.dbase.get_seis_level_by_ti_id(ti_id)
+        seis_energy = self.dbase.get_seis_energy(measure_pair_id)
+        seis_level = self.dbase.get_seis_level(measure_pair_id)
 
-        seis_file_path = self.dbase.get_seis_file_path_by_ti_id(ti_id)
+        seis_file_path = self.dbase.get_seis_file_path(measure_pair_id)
         z_signal = read_z_signal(seis_file_path)
 
         seis_data = SeismicData(seis_level, seis_energy, z_signal)
 
-        quite_minute = self.dbase.get_quite_minute_start_by_ti_id(ti_id)
+        quite_minute = self.dbase.get_quite_minute_start(measure_pair_id)
 
-        title = self.generate_title(ti_id)
-        filename = self.generate_filename(ti_id)
+        title = self.generate_title(measure_pair_id)
+        filename = self.generate_filename(measure_pair_id)
 
         export_path = os.path.join(self.export_folder_path, filename)
 
@@ -358,6 +358,6 @@ class Plotting:
         plotter.run()
 
     def run(self):
-        ti_ids = [x[0] for x in self.dbase.get_grav_seis_time_intersections()]
-        for ti_id in ti_ids:
+        measure_pairs_ids = [x[0] for x in self.dbase.get_measure_pairs()]
+        for ti_id in measure_pairs_ids:
             self.create_plot(ti_id)
