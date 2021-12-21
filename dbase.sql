@@ -82,7 +82,7 @@ CREATE TABLE seis_files_defect_info(
     FOREIGN KEY (seis_file_id) REFERENCES seis_files(id)
 );
 
-CREATE TABLE grav_seis_time_intersections(
+CREATE TABLE measure_pairs(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     grav_dat_file_id INTEGER NOT NULL,
     seis_file_id INTEGER NOT NULL,
@@ -94,31 +94,31 @@ CREATE TABLE grav_seis_time_intersections(
 
 CREATE TABLE seis_energy(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    time_intersection_id INTEGER NOT NULL,
+    measure_pair_id INTEGER NOT NULL,
     minute_index INTEGER NOT NULL,
     Ex REAL NOT NULL DEFAULT 0,
     Ey REAL NOT NULL DEFAULT 0,
     Ez REAL NOT NULL DEFAULT 0,
     Efull REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
+    FOREIGN KEY (measure_pair_id) REFERENCES measure_pairs(id) ON DELETE CASCADE
 );
 
 CREATE TABLE median_energy(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    time_intersection_id INTEGER NOT NULL,
+    measure_pair_id INTEGER NOT NULL,
     Ex REAL NOT NULL DEFAULT 0,
     Ey REAL NOT NULL DEFAULT 0,
     Ez REAL NOT NULL DEFAULT 0,
     Efull REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (time_intersection_id) REFERENCES time_intersection(id) ON DELETE CASCADE
+    FOREIGN KEY (measure_pair_id) REFERENCES measure_pairs(id) ON DELETE CASCADE
 );
 
 CREATE TABLE corrections(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    time_intersection_id INTEGER NOT NULL,
+    measure_pair_id INTEGER NOT NULL,
     grav_measure_id INTEGER NOT NULL,
     seis_corr REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (time_intersection_id) REFERENCES grav_seis_time_intersections (id) ON DELETE CASCADE
+    FOREIGN KEY (measure_pair_id) REFERENCES measure_pairs(id) ON DELETE CASCADE
     FOREIGN KEY (grav_measure_id) REFERENCES gravity_measures_minutes(id) ON DELETE CASCADE
 );
 
@@ -169,58 +169,58 @@ WHERE g.filename NOT IN (
 
 CREATE VIEW minimal_energy
 AS
-SELECT time_intersection_id, minute_index, MIN(Ez) AS Ez
+SELECT measure_pair_id, minute_index, MIN(Ez) AS Ez
 FROM seis_energy se
-GROUP BY time_intersection_id;
+GROUP BY measure_pair_id;
 
 CREATE VIEW energy_ratio
 AS
-SELECT se.time_intersection_id, se.minute_index, se.Ez/me.Ez AS Rz
+SELECT se.measure_pair_id, se.minute_index, se.Ez/me.Ez AS Rz
 FROM seis_energy se
-JOIN minimal_energy me ON se.time_intersection_id=me.time_intersection_id;
+JOIN minimal_energy me ON se.measure_pair_id=me.measure_pair_id;
 
 CREATE VIEW grav_level
 AS
-SELECT se.time_intersection_id, ROUND(AVG(gmm.corr_grav), 4) AS quite_grav_level
+SELECT se.measure_pair_id, ROUND(AVG(gmm.corr_grav), 4) AS quite_grav_level
 FROM seis_energy AS se
-JOIN median_energy AS me ON me.time_intersection_id=se.time_intersection_id
-JOIN grav_seis_time_intersections gsti ON me.time_intersection_id=gsti.id
-JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id=gsti.grav_dat_id AND gmm.datetime_val=DATETIME(STRFTIME('%s', gsti.datetime_start)+(se.minute_index + 1) * 60, 'unixepoch')
+JOIN median_energy AS me ON me.measure_pair_id=se.measure_pair_id
+JOIN measure_pairs mp ON me.measure_pair_id=mp.id
+JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id=mp.grav_dat_file_id AND gmm.datetime_val=DATETIME(STRFTIME('%s', mp.datetime_start)+(se.minute_index + 1) * 60, 'unixepoch')
 WHERE se.Efull < me.Efull AND gmm.is_bad=0
-GROUP BY se.time_intersection_id;
+GROUP BY se.measure_pair_id;
 
 CREATE VIEW pre_correction
 AS
-SELECT gsti.id AS time_intersection_id, gmm.id AS grav_measure_id,
+SELECT mp.id AS measure_pair_id, gmm.id AS grav_measure_id,
        gl.quite_grav_level, gmm.corr_grav, Rz
 FROM seis_energy se
-JOIN grav_seis_time_intersections gsti ON gsti.id=se.time_intersection_id
-JOIN minimal_energy me ON me.time_intersection_id=se.time_intersection_id
-JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id =gsti.grav_dat_id AND gmm.datetime_val = DATETIME(STRFTIME('%s', gsti.datetime_start)+(se.minute_index + 1) * 60, 'unixepoch')
-JOIN grav_level gl ON gl.time_intersection_id =se.time_intersection_id
-JOIN energy_ratio er ON er.time_intersection_id=se.time_intersection_id AND er.minute_index=se.minute_index;
+JOIN measure_pairs mp ON mp.id=se.measure_pair_id
+JOIN minimal_energy me ON me.measure_pair_id=se.measure_pair_id
+JOIN gravity_measures_minutes gmm ON gmm.grav_dat_file_id =mp.grav_dat_file_id AND gmm.datetime_val = DATETIME(STRFTIME('%s', mp.datetime_start)+(se.minute_index + 1) * 60, 'unixepoch')
+JOIN grav_level gl ON gl.measure_pair_id =se.measure_pair_id
+JOIN energy_ratio er ON er.measure_pair_id=se.measure_pair_id AND er.minute_index=se.minute_index;
 
 CREATE VIEW sensor_pairs
 AS
-SELECT l.chain_id, l.id AS link_id, gsti.id AS time_intersection_id,
+SELECT l.chain_id, l.id AS link_id, mp.id AS measure_pair_id,
        s.id AS seismometer_id, gdf.gravimeter_id
-FROM grav_seis_time_intersections gsti
-JOIN grav_dat_files gdf ON gdf.id=gsti.grav_dat_id
-JOIN seis_files sf ON sf.id=gsti.seis_id
+FROM measure_pairs mp
+JOIN grav_dat_files gdf ON gdf.id=mp.grav_dat_file_id
+JOIN seis_files sf ON sf.id=mp.seis_file_id
 JOIN seismometers s ON s.id=sf.sensor_id
 JOIN links l ON l.filename=gdf.filename;
 
 CREATE VIEW post_correction
 AS
-SELECT l.chain_id, l.id AS link_id, gsti.id AS time_intersection_id,
+SELECT l.chain_id, l.id AS link_id, mp.id AS measure_pair_id,
        link_index,
        gmm.id-(SELECT MIN(id)
                FROM gravity_measures_minutes
                WHERE grav_dat_file_id=gdf.id) + 1 AS cycle_index,
        gmm.is_bad, ifnull(c.seis_corr, 0) AS seis_corr
 FROM gravity_measures_minutes gmm
-JOIN grav_seis_time_intersections gsti ON gmm.grav_dat_file_id=gsti.grav_dat_id
+JOIN measure_pairs mp ON gmm.grav_dat_file_id=mp.grav_dat_file_id
 JOIN grav_dat_files gdf ON gdf.id =gmm.grav_dat_file_id
 JOIN links l ON l.filename=gdf.filename
 LEFT JOIN corrections c ON c.grav_measure_id=gmm.id
-WHERE gsti.id IN (SELECT id FROM grav_seis_time_intersections);
+WHERE mp.id IN (SELECT id FROM measure_pairs);
