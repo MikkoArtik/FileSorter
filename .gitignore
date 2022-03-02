@@ -5,5 +5,4 @@
 .idea
 drafts
 venv
-
-*.iml
+__pycache__
