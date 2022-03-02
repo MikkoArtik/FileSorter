@@ -68,6 +68,20 @@ class Processing:
         signal_time = np.arange(0, signal.shape[0]) / params.frequency
         return np.column_stack((signal_time, signal))
 
+    def load_avg_characteristics(self,
+                                 signal_type: str) -> Union[np.ndarray, None]:
+        if signal_type == 'seismic':
+            params = self.config.seismic_parameters
+            signal = self.seis_signal
+        elif signal_type == 'gravimetric':
+            params = self.config.gravimetric_parameters
+            signal = self.grav_signal
+        else:
+            return None
+        return get_amplitude_energy_params(
+            signal, params.time_window, params.frequency,
+            params.energy_freq)
+
     def save_signals(self):
         grav_signal, seis_signal = self.grav_signal, self.seis_signal
 
