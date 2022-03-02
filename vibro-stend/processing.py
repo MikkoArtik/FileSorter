@@ -77,7 +77,7 @@ class Processing:
 
         export_path = os.path.join(self.config.gravimetric_root_folder,
                                    'source_signal.dat')
-        np.savetxt(export_path, seis_signal, '%.3f\t%.3f', '\t',
+        np.savetxt(export_path, grav_signal, '%.3f\t%.3f', '\t',
                    header='Time\tAmplitude', comments='')
 
     def extract_signal_for_cycle(self, signal_type: str,
