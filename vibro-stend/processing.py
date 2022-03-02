@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 import numpy as np
 
@@ -79,33 +80,46 @@ class Processing:
         np.savetxt(export_path, seis_signal, '%.3f\t%.3f', '\t',
                    header='Time\tAmplitude', comments='')
 
+    def extract_signal_for_cycle(self, signal_type: str,
+                                 cycle_index: int) -> Union[np.ndarray, None]:
+        try:
+            cycle = self.config.measure_cycles[cycle_index]
+        except IndexError:
+            return None
+
+        if signal_type == 'seismic' and cycle.seismic_time_limit:
+            t_limit = cycle.seismic_time_limit
+            signal = self.seis_signal
+        elif signal_type == 'gravimetric' and cycle.gravimetric_time_limit:
+            t_limit = cycle.gravimetric_time_limit
+            signal = self.grav_signal
+        else:
+            return None
+
+        signal_part = signal[(signal[:, 0] >= t_limit.low) *
+                             (signal[:, 0] < t_limit.high), 1]
+        return signal_part
+
     def save_spectrums(self):
-        grav_signal, seis_signal = self.grav_signal, self.seis_signal
         for index, cycle in enumerate(self.config.measure_cycles):
             filename = f'{index}-stand-frequency={cycle.frequency}-' \
                        f'amplitude={cycle.amplitude}.dat'
             header = 'Frequency\tAmplitude'
-            if cycle.seismic_time_limit:
-                t_limit = cycle.seismic_time_limit
-                g_signal_part = seis_signal[
-                    (seis_signal[:, 0] >= t_limit.low) *
-                    (seis_signal[:, 0] < t_limit.high), 1]
 
+            seis_signal_part = self.extract_signal_for_cycle('seismic', index)
+            if seis_signal_part is not None:
                 freq = self.config.seismic_parameters.frequency
-                spectrum_data = spectrum(g_signal_part, freq)
+                spectrum_data = spectrum(seis_signal_part, freq)
 
                 path = os.path.join(self.config.seismic_root_folder, filename)
                 np.savetxt(path, spectrum_data, '%f', '\t', header=header,
                            comments='')
 
-            if cycle.gravimetric_time_limit:
-                t_limit = cycle.gravimetric_time_limit
-                g_signal_part = grav_signal[
-                    (grav_signal[:, 0] >= t_limit.low) *
-                    (grav_signal[:, 0] < t_limit.high), 1]
-
+            grav_signal_part = self.extract_signal_for_cycle('gravimetric',
+                                                             index)
+            if grav_signal_part is not None:
                 freq = self.config.gravimetric_parameters.frequency
-                spectrum_data = spectrum(g_signal_part, freq)
+                spectrum_data = spectrum(grav_signal_part, freq)
 
                 path = os.path.join(self.config.gravimetric_root_folder,
                                     filename)
