@@ -18,6 +18,10 @@ class StendMeasure:
     seismic_time_limit: Union[Limit, None]
     gravimetric_time_limit: Union[Limit, None]
 
+    @property
+    def velocity(self):
+        return 2 * self.frequency * self.amplitude
+
 
 @dataclass
 class GravimetricParameters:
