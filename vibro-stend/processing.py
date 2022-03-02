@@ -12,7 +12,8 @@ from config import Config, Limit
 
 
 def get_amplitude_energy_params(signal: np.ndarray, time_window: int,
-                                frequency: int, energy_freq_limits: Limit):
+                                frequency: int,
+                                energy_freq_limits: Limit) -> np.ndarray:
     parts_count = int(signal.shape[0] / (time_window * frequency))
 
     result = np.zeros(shape=(parts_count, 4))
