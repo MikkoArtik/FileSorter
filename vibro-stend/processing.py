@@ -52,7 +52,8 @@ class Processing:
         bin_data = BinaryFile(path, 0, use_avg_values=False)
 
         signal = bin_data.read_signal('Z')
-        signal_time = np.arange(0, signal.shape[0]) / bin_data.signal_frequency
+        frequency = bin_data.signal_frequency
+        signal_time = np.arange(0, signal.shape[0]) / frequency
         return np.column_stack((signal_time, signal))
 
     def load_gravimetric_signal(self):
@@ -106,7 +107,8 @@ class Processing:
                 freq = self.config.gravimetric_parameters.frequency
                 spectrum_data = spectrum(g_signal_part, freq)
 
-                path = os.path.join(self.config.gravimetric_root_folder, filename)
+                path = os.path.join(self.config.gravimetric_root_folder,
+                                    filename)
                 np.savetxt(path, spectrum_data, '%f', '\t', header=header,
                            comments='')
 
