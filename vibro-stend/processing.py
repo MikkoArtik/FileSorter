@@ -47,7 +47,10 @@ class Processing:
         self.config = Config(config_path)
 
         self.seis_signal = self.load_seismic_signal()
+        self.seis_avg_data = self.load_avg_characteristics('seismic')
+
         self.grav_signal = self.load_gravimetric_signal()
+        self.grav_avg_data = self.load_avg_characteristics('gravimetric')
 
     def load_seismic_signal(self):
         path = self.config.seismic_file_path
@@ -142,33 +145,22 @@ class Processing:
                            comments='')
 
     def save_amplitude_energy_params(self):
-        grav_signal, seis_signal = self.grav_signal, self.seis_signal
+        if self.grav_avg_data is not None:
+            export_path = os.path.join(self.config.gravimetric_root_folder,
+                                       'energy-amplitude.dat')
+            np.savetxt(export_path, self.grav_avg_data, '%i\t%.3f\t%.3f\t%i',
+                       header='Time,sec\tSpectrum_Energy\t'
+                              'Amplitude_Energy\tAmplitude',
+                       comments='')
 
-        params = self.config.gravimetric_parameters
-        grav_data = get_amplitude_energy_params(grav_signal,
-                                                params.time_window,
-                                                params.frequency,
-                                                params.energy_freq)
-
-        export_path = os.path.join(self.config.gravimetric_root_folder,
-                                   'energy-amplitude.dat')
-        np.savetxt(export_path, grav_data, '%i\t%.3f\t%.3f\t%i',
-                   header='Time,sec\tSpectrum_Energy\t'
-                          'Amplitude_Energy\tAmplitude',
-                   comments='')
-
-        params = self.config.seismic_parameters
-        seis_data = get_amplitude_energy_params(seis_signal,
-                                                params.time_window,
-                                                params.frequency,
-                                                params.energy_freq)
-
-        export_path = os.path.join(self.config.seismic_root_folder,
-                                   'energy-amplitude.dat')
-        np.savetxt(export_path, seis_data, '%i\t%.3f\t%.3f\t%.3f',
-                   header='Time,sec\tSpectrum_Energy\t'
-                          'Amplitude_Energy\tAmplitude',
-                   comments='')
+        if self.seis_avg_data is not None:
+            export_path = os.path.join(self.config.seismic_root_folder,
+                                       'energy-amplitude.dat')
+            np.savetxt(export_path, self.seis_avg_data,
+                       '%i\t%.3f\t%.3f\t%.3f',
+                       header='Time,sec\tSpectrum_Energy\t'
+                              'Amplitude_Energy\tAmplitude',
+                       comments='')
 
     def run(self):
         self.save_signals()
