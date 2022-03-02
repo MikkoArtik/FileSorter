@@ -101,8 +101,3 @@ class Config:
                                    time_gravimetric)
             measure_cycles.append(measure)
         return measure_cycles
-
-
-a = Config('19-01-2022 (K07-1418).yml')
-
-pass
