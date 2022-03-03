@@ -26,7 +26,7 @@ class StendMeasure:
 
     @property
     def velocity(self):
-        return 2 * self.frequency * self.amplitude
+        return round(2 * self.frequency * self.amplitude, 3)
 
 
 @dataclass
