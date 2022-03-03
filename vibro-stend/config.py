@@ -122,3 +122,19 @@ class Config:
                                    time_gravimetric)
             measure_cycles.append(measure)
         return measure_cycles
+
+
+class StreamConfig:
+    def __init__(self, path: str):
+        self.src_data = load_yaml_file(path)
+
+    @property
+    def root_folder(self) -> str:
+        return self.src_data['root']
+
+    @property
+    def config_files(self) -> List[str]:
+        paths = [os.path.join(self.root_folder, x)
+                 for x in self.src_data['files']
+                 ]
+        return paths
