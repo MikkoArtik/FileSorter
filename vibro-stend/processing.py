@@ -153,6 +153,8 @@ class Processing:
         stat_array.fill(-9999)
         for i in range(len(self.config.measure_cycles)):
             cycle = self.config.measure_cycles[i]
+            if not cycle.is_use_in_statistics:
+                continue
             stat_array[i, :3] = [cycle.frequency, cycle.amplitude,
                                  cycle.velocity]
             for j, signal_type in enumerate(('seismic', 'gravimetric')):
