@@ -12,6 +12,12 @@ class Limit:
 
 
 @dataclass
+class Pair:
+    seismic: str
+    gravimetric: str
+
+
+@dataclass
 class StendMeasure:
     frequency: float
     amplitude: float
@@ -84,6 +90,12 @@ class Config:
                                      params['frequency'],
                                      params['time-window'],
                                      energy_freq_limits)
+
+    @property
+    def device_pair(self) -> Pair:
+        seis_device = self.src_data['seismic']['device']
+        grav_device = self.src_data['gravimetric']['device']
+        return Pair(seis_device, grav_device)
 
     @property
     def measure_cycles(self) -> List[StendMeasure]:
