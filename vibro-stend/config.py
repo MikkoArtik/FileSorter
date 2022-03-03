@@ -1,3 +1,4 @@
+import datetime
 import os
 from typing import List, Union
 from dataclasses import dataclass
@@ -56,6 +57,10 @@ def load_yaml_file(path: str) -> dict:
 class Config:
     def __init__(self, path: str):
         self.src_data = load_yaml_file(path)
+
+    @property
+    def measure_date(self) -> datetime.date:
+        return self.src_data['general']['date']
 
     @property
     def seismic_root_folder(self) -> str:
