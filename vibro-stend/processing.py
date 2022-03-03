@@ -211,6 +211,7 @@ class Processing:
                               'Amplitude_Energy\tAmplitude',
                        comments='')
 
+
     def run(self):
         self.save_signals()
         self.save_spectrums()
