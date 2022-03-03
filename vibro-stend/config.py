@@ -24,6 +24,7 @@ class StendMeasure:
     amplitude: float
     seismic_time_limit: Union[Limit, None]
     gravimetric_time_limit: Union[Limit, None]
+    is_use_in_statistics: bool
 
     @property
     def velocity(self):
@@ -118,8 +119,10 @@ class Config:
             if time_gravimetric:
                 time_gravimetric = Limit(*time_gravimetric.values())
 
+            is_use_in_stat = cycle['use-in-statistics']
+
             measure = StendMeasure(frequency, amplitude, time_seismic,
-                                   time_gravimetric)
+                                   time_gravimetric, is_use_in_stat)
             measure_cycles.append(measure)
         return measure_cycles
 
