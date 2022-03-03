@@ -197,7 +197,8 @@ class Processing:
         if self.grav_avg_data is not None:
             export_path = os.path.join(self.config.gravimetric_root_folder,
                                        'energy-amplitude.dat')
-            np.savetxt(export_path, self.grav_avg_data, '%i\t%.3f\t%.3f\t%i',
+            np.savetxt(export_path, self.grav_avg_data,
+                       '%i\t%.3f\t%.3f\t%.3f',
                        header='Time,sec\tSpectrum_Energy\t'
                               'Amplitude_Energy\tAmplitude',
                        comments='')
