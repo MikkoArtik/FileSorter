@@ -64,6 +64,10 @@ class Config:
         return self.src_data['general']['date']
 
     @property
+    def grav_time_offset(self) -> float:
+        return self.src_data['general']['grav-time-offset']
+
+    @property
     def seismic_root_folder(self) -> str:
         return self.src_data['seismic']['root']
 
