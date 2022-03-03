@@ -136,16 +136,17 @@ class Processing:
             return None
 
         if parameter_name == 'spectrum-energy':
-            param_data = avg_data[:, 1]
+            param_data = avg_data[(avg_data[:, 0] >= t_limit.low) *
+                                  (avg_data[:, 0] < t_limit.high), 1]
         elif parameter_name == 'amplitude-energy':
-            param_data = avg_data[:, 2]
+            param_data = avg_data[(avg_data[:, 0] >= t_limit.low) *
+                                  (avg_data[:, 0] < t_limit.high), 2]
         elif parameter_name == 'delta-amplitude':
-            param_data = avg_data[:, 3]
+            param_data = avg_data[(avg_data[:, 0] >= t_limit.low) *
+                                  (avg_data[:, 0] < t_limit.high), 3]
         else:
             return None
-
-        return np.mean(param_data[(avg_data[:, 0] >= t_limit.low) *
-                                  (avg_data[:, 0] > t_limit.high)])
+        return np.mean(param_data)
 
     def get_cycle_statistics(self):
         stat_array = np.zeros(shape=(len(self.config.measure_cycles), 9))
