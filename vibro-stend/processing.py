@@ -42,6 +42,22 @@ def get_amplitude_energy_params(signal: np.ndarray, time_window: int,
     return result
 
 
+def get_tilt_x_angle(acp_value: int, offset: float,
+                     sensitivity_coeff: float) -> float:
+    seconds = ((acp_value - offset) * 0.000076295 - 2.5) * sensitivity_coeff
+    return math.radians(seconds / 3600)
+
+
+def get_tilt_y_angle(acp_value: int, offset: float,
+                     sensitivity_coeff: float) -> float:
+    seconds = -((acp_value - offset) * 0.000076295 - 2.5) * sensitivity_coeff
+    return math.radians(seconds / 3600)
+
+
+def get_tilt_correction(x_angle: float, y_angle: float) -> float:
+    return round(980600 * (1 - math.cos(x_angle) * math.cos(y_angle)), 3)
+
+
 class Processing:
     def __init__(self, config_path: str):
         self.config = Config(config_path)
@@ -60,6 +76,21 @@ class Processing:
         frequency = bin_data.signal_frequency
         signal_time = np.arange(0, signal.shape[0]) / frequency
         return np.column_stack((signal_time, signal))
+
+    def load_tilt_correction(self) -> np.ndarray:
+        path = self.config.gravimetric_file_path
+        file_data = np.loadtxt(path, skiprows=1, usecols=[1, 2])
+        params = self.config.gravimetric_parameters.tilt
+        corrections = np.zeros(shape=file_data.shape[0])
+        for i, record in enumerate(file_data):
+            tilt_x, tilt_y = record
+            x_angle = get_tilt_x_angle(tilt_x, params.x_offset,
+                                       params.x_sensitiv)
+            y_angle = get_tilt_y_angle(tilt_y, params.y_offset,
+                                            params.y_sensitiv)
+
+            corrections[i] = get_tilt_correction(x_angle, y_angle)
+        return corrections
 
     def load_gravimetric_signal(self):
         path = self.config.gravimetric_file_path
