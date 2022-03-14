@@ -29,6 +29,14 @@ class StendMeasure:
     @property
     def velocity(self):
         return round(2 * self.frequency * self.amplitude, 3)
+    
+    
+@dataclass
+class TiltParameters:
+    x_sensitiv: float
+    y_sensitiv: float
+    x_offset: float
+    y_offset: float
 
 
 @dataclass
@@ -38,6 +46,7 @@ class GravimetricParameters:
     frequency: int
     time_window: int
     energy_freq: Limit
+    tilt: TiltParameters
 
 
 @dataclass
@@ -91,6 +100,12 @@ class Config:
     def gravimetric_file_path(self) -> str:
         return os.path.join(self.gravimetric_root_folder,
                             self.src_data['gravimetric']['filename'])
+    
+    @property
+    def tilt_parameters(self) -> TiltParameters:
+        params = self.src_data['gravimetric']['processing-parameters']['tilt']
+        return TiltParameters(params['x-sensitiv'], params['y-sensitiv'],
+                              params['x-offset'], params['y-offset'])
 
     @property
     def gravimetric_parameters(self):
@@ -99,7 +114,7 @@ class Config:
         return GravimetricParameters(params['const'], params['g-cal'],
                                      params['frequency'],
                                      params['time-window'],
-                                     energy_freq_limits)
+                                     energy_freq_limits, self.tilt_parameters)
 
     @property
     def device_pair(self) -> Pair:
