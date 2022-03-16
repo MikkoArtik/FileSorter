@@ -97,108 +97,23 @@ class Processing:
             return None
         return self.config.measure_cycles[cycle_indexes.pop()]
 
-        signal_part = signal[(signal[:, 0] >= t_limit.low) *
-                             (signal[:, 0] < t_limit.high), 1]
-        return signal_part
-
-    def get_average_param_for_cycle(self, signal_type: str,
-                                    cycle_index: int,
-                                    parameter_name: str) -> Union[float, None]:
-        try:
-            cycle = self.config.measure_cycles[cycle_index]
-        except IndexError:
-            return None
-
-        if signal_type == 'seismic' and cycle.seismic_time_limit:
-            avg_data = self.seis_avg_data
-            t_limit = cycle.seismic_time_limit
-        elif signal_type == 'gravimetric' and cycle.gravimetric_time_limit:
-            avg_data = self.grav_avg_data
-            t_limit = cycle.gravimetric_time_limit
-        else:
-            return None
-
-        if parameter_name == 'spectrum-energy':
-            param_data = avg_data[(avg_data[:, 0] >= t_limit.low) *
-                                  (avg_data[:, 0] < t_limit.high), 1]
-        elif parameter_name == 'amplitude-energy':
-            param_data = avg_data[(avg_data[:, 0] >= t_limit.low) *
-                                  (avg_data[:, 0] < t_limit.high), 2]
-        elif parameter_name == 'delta-amplitude':
-            param_data = avg_data[(avg_data[:, 0] >= t_limit.low) *
-                                  (avg_data[:, 0] < t_limit.high), 3]
-        else:
-            return None
-        return np.mean(param_data)
-
-    def get_cycle_statistics(self):
-        stat_array = np.zeros(shape=(len(self.config.measure_cycles), 9))
-        stat_array.fill(-9999)
-        for i in range(len(self.config.measure_cycles)):
-            cycle = self.config.measure_cycles[i]
-            if not cycle.is_use_in_statistics:
+    def get_statistics(self) -> List[StatInfo]:
+        stat_info = []
+        for i, grav_measure in enumerate(self.result_grav_data.measures):
+            t_min, t_max = grav_measure.dt_start, grav_measure.dt_stop
+            cycle_info = self.get_cycle_info(t_min, t_max)
+            if cycle_info is None or not cycle_info.is_use_in_statistics:
                 continue
-            stat_array[i, :3] = [cycle.frequency, cycle.amplitude,
-                                 cycle.velocity]
-            for j, signal_type in enumerate(('seismic', 'gravimetric')):
-                for k, param_name in enumerate(('spectrum-energy',
-                                                'amplitude-energy',
-                                                'delta-amplitude')):
-                    param_val = self.get_average_param_for_cycle(
-                        signal_type, i, param_name)
-                    if param_val is None:
-                        continue
+            try:
+                avg_params = self.get_seis_avg_characteristics(t_min, t_max)
+            except ValueError:
+                continue
 
-                    cell_col_index = 3 * (j + 1) + k
-                    stat_array[i, cell_col_index] = param_val
-        return stat_array[stat_array[:, 3] != -9999]
-
-    def save_spectrums(self):
-        for index, cycle in enumerate(self.config.measure_cycles):
-            filename = f'{index}-stand-frequency={cycle.frequency}-' \
-                       f'amplitude={cycle.amplitude}.dat'
-            header = 'Frequency\tAmplitude'
-
-            seis_signal_part = self.extract_signal_for_cycle('seismic', index)
-            if seis_signal_part is not None:
-                freq = self.config.seismic_parameters.frequency
-                spectrum_data = spectrum(seis_signal_part, freq)
-
-                path = os.path.join(self.config.seismic_root_folder, filename)
-                np.savetxt(path, spectrum_data, '%f', '\t', header=header,
-                           comments='')
-
-            grav_signal_part = self.extract_signal_for_cycle('gravimetric',
-                                                             index)
-            if grav_signal_part is not None:
-                freq = self.config.gravimetric_parameters.frequency
-                spectrum_data = spectrum(grav_signal_part, freq)
-
-                path = os.path.join(self.config.gravimetric_root_folder,
-                                    filename)
-                np.savetxt(path, spectrum_data, '%f', '\t', header=header,
-                           comments='')
-
-    def save_amplitude_energy_params(self):
-        if self.grav_avg_data is not None:
-            export_path = os.path.join(self.config.gravimetric_root_folder,
-                                       'energy-amplitude.dat')
-            np.savetxt(export_path, self.grav_avg_data,
-                       '%i\t%.3f\t%.3f\t%.3f',
-                       header='Time,sec\tSpectrum_Energy\t'
-                              'Amplitude_Energy\tAmplitude',
-                       comments='')
-
-        if self.seis_avg_data is not None:
-            export_path = os.path.join(self.config.seismic_root_folder,
-                                       'energy-amplitude.dat')
-            np.savetxt(export_path, self.seis_avg_data, '%i\t%.3f\t%.3f\t%i',
-                       header='Time,sec\tSpectrum_Energy\t'
-                              'Amplitude_Energy\tAmplitude',
-                       comments='')
-
-
-    def run(self):
-        self.save_signals()
-        self.save_spectrums()
-        self.save_amplitude_energy_params()
+            info = StatInfo(grav_measure.dt_start,
+                            self.config.device_pair.seismic,
+                            self.config.device_pair.gravimetric,
+                            cycle_info.frequency, cycle_info.amplitude,
+                            cycle_info.velocity, *avg_params,
+                            grav_measure.value)
+            stat_info.append(info)
+        return stat_info
