@@ -52,7 +52,6 @@ class GravimetricParameters:
 @dataclass
 class SeismicParameters:
     frequency: int
-    time_window: int
     energy_freq: Limit
 
 
