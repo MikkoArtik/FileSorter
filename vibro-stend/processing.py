@@ -77,48 +77,25 @@ class Processing:
                                              seis_params.energy_freq)
         return params
 
-    def load_avg_characteristics(self,
-                                 signal_type: str) -> Union[np.ndarray, None]:
-        if signal_type == 'seismic':
-            params = self.config.seismic_parameters
-            signal = self.seis_signal
-        elif signal_type == 'gravimetric':
-            params = self.config.gravimetric_parameters
-            signal = self.grav_signal
-        else:
+    def get_cycle_info(self, seis_dt_min: datetime,
+                       seis_dt_max: datetime) -> Union[None, StendMeasure]:
+        origin_start = self.seis_data.datetime_start
+
+        dt_min_sec = (seis_dt_min - origin_start).total_seconds()
+        dt_max_sec = (seis_dt_max - origin_start).total_seconds()
+
+        cycle_indexes, amount = set(), 0
+        for i, cycle in enumerate(self.config.measure_cycles):
+            t_limits = cycle.seismic_time_limit
+            if t_limits.low <= dt_min_sec <= t_limits.high:
+                cycle_indexes.add(i)
+                amount += 1
+            if t_limits.low <= dt_max_sec <= t_limits.high:
+                cycle_indexes.add(i)
+                amount += 1
+        if len(cycle_indexes) != 1 or amount != 2:
             return None
-        return get_amplitude_energy_params(
-            signal, params.time_window, params.frequency,
-            params.energy_freq)
-
-    def save_signals(self):
-        grav_signal, seis_signal = self.grav_signal, self.seis_signal
-
-        export_path = os.path.join(self.config.seismic_root_folder,
-                                   'source_signal.dat')
-        np.savetxt(export_path, seis_signal, '%.3f\t%i', '\t',
-                   header='Time\tAmplitude', comments='')
-
-        export_path = os.path.join(self.config.gravimetric_root_folder,
-                                   'source_signal.dat')
-        np.savetxt(export_path, grav_signal, '%.3f\t%.3f', '\t',
-                   header='Time\tAmplitude', comments='')
-
-    def extract_signal_for_cycle(self, signal_type: str,
-                                 cycle_index: int) -> Union[np.ndarray, None]:
-        try:
-            cycle = self.config.measure_cycles[cycle_index]
-        except IndexError:
-            return None
-
-        if signal_type == 'seismic' and cycle.seismic_time_limit:
-            t_limit = cycle.seismic_time_limit
-            signal = self.seis_signal
-        elif signal_type == 'gravimetric' and cycle.gravimetric_time_limit:
-            t_limit = cycle.gravimetric_time_limit
-            signal = self.grav_signal
-        else:
-            return None
+        return self.config.measure_cycles[cycle_indexes.pop()]
 
         signal_part = signal[(signal[:, 0] >= t_limit.low) *
                              (signal[:, 0] < t_limit.high), 1]
