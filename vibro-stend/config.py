@@ -66,8 +66,7 @@ class Config:
     def seismic_parameters(self) -> SeismicParameters:
         params = self.src_data['seismic']['processing-parameters']
         energy_freq_limits = Limit(*params['energy'].values())
-        return SeismicParameters(params['frequency'], params['time-window'],
-                                 energy_freq_limits)
+        return SeismicParameters(params['frequency'], energy_freq_limits)
 
     @property
     def gravimetric_root_folder(self) -> str:
