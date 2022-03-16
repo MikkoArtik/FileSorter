@@ -28,20 +28,28 @@ def get_amplitude_energy_params(signal: np.ndarray, frequency: int,
     ampl_diff = max_amp - min_amp
     return sp_e_val, ampl_e_val, ampl_diff
 
-def get_tilt_x_angle(acp_value: int, offset: float,
-                     sensitivity_coeff: float) -> float:
-    seconds = ((acp_value - offset) * 0.000076295 - 2.5) * sensitivity_coeff
-    return math.radians(seconds / 3600)
 
+@dataclass
+class StatInfo:
+    datetime_val: datetime
+    seismometer: str
+    gravimeter: str
+    frequency: float
+    amplitude: float
+    velocity: float
+    spectrum_energy: float
+    amplitude_energy: float
+    delta_amplitude: float
+    grav_measure: float
 
-def get_tilt_y_angle(acp_value: int, offset: float,
-                     sensitivity_coeff: float) -> float:
-    seconds = -((acp_value - offset) * 0.000076295 - 2.5) * sensitivity_coeff
-    return math.radians(seconds / 3600)
-
-
-def get_tilt_correction(x_angle: float, y_angle: float) -> float:
-    return round(980600 * (1 - math.cos(x_angle) * math.cos(y_angle)), 3)
+    @property
+    def line(self) -> str:
+        t = [self.datetime_val.strftime('%Y-%m-%d %H:%M:%S'),
+             self.seismometer, self.gravimeter, str(self.frequency),
+             str(self.amplitude), str(self.velocity),
+             str(self.spectrum_energy), str(self.amplitude_energy),
+             str(self.delta_amplitude), str(self.grav_measure)]
+        return '\t'.join(t)
 
 
 class Processing:
