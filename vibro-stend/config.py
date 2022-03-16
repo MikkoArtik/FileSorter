@@ -74,7 +74,7 @@ class Config:
         return self.src_data['gravimetric']['root']
 
     @property
-    def gravimetric_file_path(self) -> str:
+    def gravimetric_result_file_path(self) -> str:
         return os.path.join(self.gravimetric_root_folder,
                             self.src_data['gravimetric']['filename'])
     
