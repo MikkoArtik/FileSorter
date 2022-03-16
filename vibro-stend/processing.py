@@ -56,35 +56,13 @@ class Processing:
     def __init__(self, config_path: str):
         self.config = Config(config_path)
 
-        self.seis_signal = self.load_seismic_signal()
-        self.seis_avg_data = self.load_avg_characteristics('seismic')
+        self.result_grav_data = self.load_result_gravimetric_file()
+        self.seis_data = BinaryFile(self.config.seismic_file_path)
 
-        self.grav_signal = self.load_gravimetric_signal()
-        self.grav_avg_data = self.load_avg_characteristics('gravimetric')
-
-    def load_seismic_signal(self):
-        path = self.config.seismic_file_path
-        bin_data = BinaryFile(path, 0, use_avg_values=False)
-
-        signal = bin_data.read_signal('Z')
-        frequency = bin_data.signal_frequency
-        signal_time = np.arange(0, signal.shape[0]) / frequency
-        return np.column_stack((signal_time, signal))
-
-    def load_tilt_correction(self) -> np.ndarray:
-        path = self.config.gravimetric_file_path
-        file_data = np.loadtxt(path, skiprows=1, usecols=[1, 2])
-        params = self.config.gravimetric_parameters.tilt
-        corrections = np.zeros(shape=file_data.shape[0])
-        for i, record in enumerate(file_data):
-            tilt_x, tilt_y = record
-            x_angle = get_tilt_x_angle(tilt_x, params.x_offset,
-                                       params.x_sensitiv)
-            y_angle = get_tilt_y_angle(tilt_y, params.y_offset,
-                                            params.y_sensitiv)
-
-            corrections[i] = get_tilt_correction(x_angle, y_angle)
-        return corrections
+    def load_result_gravimetric_file(self) -> SG5File:
+        path = self.config.gravimetric_result_file_path
+        sg5_file = SG5File(path)
+        return sg5_file
 
     def load_gravimetric_signal(self):
         path = self.config.gravimetric_file_path
