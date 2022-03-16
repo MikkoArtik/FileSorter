@@ -32,24 +32,6 @@ class StendMeasure:
     
     
 @dataclass
-class TiltParameters:
-    x_sensitiv: float
-    y_sensitiv: float
-    x_offset: float
-    y_offset: float
-
-
-@dataclass
-class GravimetricParameters:
-    const: int
-    g_cal: float
-    frequency: int
-    time_window: int
-    energy_freq: Limit
-    tilt: TiltParameters
-
-
-@dataclass
 class SeismicParameters:
     frequency: int
     energy_freq: Limit
