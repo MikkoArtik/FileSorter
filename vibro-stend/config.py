@@ -76,22 +76,7 @@ class Config:
     @property
     def gravimetric_result_file_path(self) -> str:
         return os.path.join(self.gravimetric_root_folder,
-                            self.src_data['gravimetric']['filename'])
-    
-    @property
-    def tilt_parameters(self) -> TiltParameters:
-        params = self.src_data['gravimetric']['processing-parameters']['tilt']
-        return TiltParameters(params['x-sensitiv'], params['y-sensitiv'],
-                              params['x-offset'], params['y-offset'])
-
-    @property
-    def gravimetric_parameters(self):
-        params = self.src_data['gravimetric']['processing-parameters']
-        energy_freq_limits = Limit(*params['energy'].values())
-        return GravimetricParameters(params['const'], params['g-cal'],
-                                     params['frequency'],
-                                     params['time-window'],
-                                     energy_freq_limits, self.tilt_parameters)
+                            self.src_data['gravimetric']['result-file'])
 
     @property
     def device_pair(self) -> Pair:
