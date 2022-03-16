@@ -11,36 +11,22 @@ from seiscore.functions.filter import band_pass_filter
 from config import Config, Limit
 
 
-def get_amplitude_energy_params(signal: np.ndarray, time_window: int,
-                                frequency: int,
-                                energy_freq_limits: Limit) -> np.ndarray:
-    parts_count = int(signal.shape[0] / (time_window * frequency))
 
-    result = np.zeros(shape=(parts_count, 4))
-    result[:, 0] = time_window / 2 + np.arange(0, parts_count) * time_window
-    for i in range(parts_count):
-        left_edge = int(i * time_window * frequency)
-        right_edge = int((i + 1) * time_window * frequency)
+def get_amplitude_energy_params(signal: np.ndarray, frequency: int,
+                                energy_freq_limits: Limit) -> Tuple[float,
+                                                                    float,
+                                                                    float]:
+    min_amp, max_amp = min(signal), max(signal)
 
-        part_signal = signal[left_edge: right_edge, 1].copy()
-        min_amp, max_amp = min(part_signal), max(part_signal)
-        part_signal -= int(np.mean(part_signal))
-
-        spectrum_data = spectrum(part_signal, frequency)
-        sp_e_val = spectrum_energy(spectrum_data, [energy_freq_limits.low,
-                                                   energy_freq_limits.high])
-        result[i, 1] = sp_e_val
-
-        filter_signal = band_pass_filter(part_signal, frequency,
-                                         energy_freq_limits.low,
-                                         energy_freq_limits.high)
-        ampl_e_val = np.sum(filter_signal ** 2)
-        result[i, 2] = ampl_e_val
-
-        ampl_diff = max_amp - min_amp
-        result[i, 3] = ampl_diff
-    return result
-
+    spectrum_data = spectrum(signal, frequency)
+    sp_e_val = spectrum_energy(spectrum_data, [energy_freq_limits.low,
+                                               energy_freq_limits.high])
+    filter_signal = band_pass_filter(signal, frequency,
+                                     energy_freq_limits.low,
+                                     energy_freq_limits.high)
+    ampl_e_val = np.sum(filter_signal ** 2)
+    ampl_diff = max_amp - min_amp
+    return sp_e_val, ampl_e_val, ampl_diff
 
 def get_tilt_x_angle(acp_value: int, offset: float,
                      sensitivity_coeff: float) -> float:
