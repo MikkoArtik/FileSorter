@@ -64,15 +64,18 @@ class Processing:
         sg5_file = SG5File(path)
         return sg5_file
 
-    def load_gravimetric_signal(self):
-        path = self.config.gravimetric_file_path
-        signal = np.loadtxt(path, skiprows=1)[:, 0]
+    def get_seis_avg_characteristics(self, dt_start: datetime,
+                                     dt_stop: datetime) -> Tuple[float, float,
+                                                                 float]:
+        seis_params = self.config.seismic_parameters
 
-        params = self.config.gravimetric_parameters
-        signal *= params.g_cal / params.const
+        self.seis_data.read_date_time_start = dt_start
+        self.seis_data.read_date_time_stop = dt_stop
+        signal = self.seis_data.read_signal('Z')
 
-        signal_time = np.arange(0, signal.shape[0]) / params.frequency
-        return np.column_stack((signal_time, signal))
+        params = get_amplitude_energy_params(signal, seis_params.frequency,
+                                             seis_params.energy_freq)
+        return params
 
     def load_avg_characteristics(self,
                                  signal_type: str) -> Union[np.ndarray, None]:
