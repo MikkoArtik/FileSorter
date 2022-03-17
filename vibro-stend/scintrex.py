@@ -35,9 +35,6 @@ def load_file(func):
 
 @load_file
 def load_sg5_file(path: str) -> List[Measure]:
-    if not os.path.exists(path):
-        raise OSError('Invalid file path')
-
     measures = []
     with open(path) as file_ctx:
         for i, line in enumerate(file_ctx):
