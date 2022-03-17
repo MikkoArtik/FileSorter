@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from datetime import timedelta
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 
 
 SKIP_LINES = 54
@@ -93,6 +93,7 @@ class SG5File:
     def measures(self) -> List[Measure]:
         return self.__measures
 
-    def add_time_offset(self, offset: float):
+    def add_drift_corrections(self, corrections: DriftCorrectionFile):
         for measure in self.measures:
-            measure.add_time_offset(offset)
+            correction = corrections.get_value(self.number, measure.dt_start)
+            measure.drift_correction = correction
