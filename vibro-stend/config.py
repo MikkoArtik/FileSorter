@@ -78,6 +78,11 @@ class Config:
                             self.src_data['gravimetric']['result-file'])
 
     @property
+    def drift_correction_file_path(self) -> str:
+        return os.path.join(self.gravimetric_root_folder,
+                            self.src_data['gravimetric']['drift-correction-file'])
+
+    @property
     def device_pair(self) -> Pair:
         seis_device = self.src_data['seismic']['device']
         grav_device = self.src_data['gravimetric']['device']
