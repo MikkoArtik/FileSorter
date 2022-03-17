@@ -10,7 +10,7 @@ from seiscore.functions.energy import spectrum_energy
 from seiscore.functions.filter import band_pass_filter
 
 from config import Config, Limit, StendMeasure
-from scintrex import SG5File
+from scintrex import SG5File, DriftCorrectionFile
 
 
 def get_amplitude_energy_params(signal: np.ndarray, frequency: int,
@@ -57,8 +57,13 @@ class Processing:
     def __init__(self, config_path: str):
         self.config = Config(config_path)
 
+        self.corrections = self.load_corrections()
         self.result_grav_data = self.load_result_gravimetric_file()
         self.seis_data = BinaryFile(self.config.seismic_file_path)
+
+    def load_corrections(self) -> DriftCorrectionFile:
+        path = self.config.drift_correction_file_path
+        return DriftCorrectionFile(path)
 
     def load_result_gravimetric_file(self) -> SG5File:
         path = self.config.gravimetric_result_file_path
