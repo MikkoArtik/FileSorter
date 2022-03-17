@@ -67,7 +67,8 @@ class Processing:
 
     def load_result_gravimetric_file(self) -> SG5File:
         path = self.config.gravimetric_result_file_path
-        sg5_file = SG5File(path)
+        sg5_file = SG5File(path, self.config.device_pair.gravimetric)
+        sg5_file.add_drift_corrections(self.corrections)
         return sg5_file
 
     def get_seis_avg_characteristics(self, dt_start: datetime,
@@ -120,6 +121,6 @@ class Processing:
                             self.config.device_pair.gravimetric,
                             cycle_info.frequency, cycle_info.amplitude,
                             cycle_info.velocity, *avg_params,
-                            grav_measure.value)
+                            grav_measure.result_value)
             stat_info.append(info)
         return stat_info
