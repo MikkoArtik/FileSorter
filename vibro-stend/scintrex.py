@@ -25,7 +25,15 @@ class Measure:
         return self.src_value + self.drift_correction
 
 
+def load_file(func):
+    def wrap(path):
+        if not os.path.exists(path):
+            raise OSError(f'Invalid file path - {path}')
+        return func(path)
+    return wrap
 
+
+@load_file
 def load_sg5_file(path: str) -> List[Measure]:
     if not os.path.exists(path):
         raise OSError('Invalid file path')
