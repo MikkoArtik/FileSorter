@@ -14,6 +14,7 @@ class Measure:
     dt_start: datetime
     src_value: float
     duration: float
+    drift_correction: float = 0
 
     @property
     def dt_stop(self):
