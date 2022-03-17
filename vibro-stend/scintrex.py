@@ -20,8 +20,10 @@ class Measure:
     def dt_stop(self):
         return self.dt_start + timedelta(seconds=self.duration)
 
-    def add_time_offset(self, offset: float):
-        self.dt_start += timedelta(seconds=offset)
+    @property
+    def result_value(self) -> float:
+        return self.src_value + self.drift_correction
+
 
 
 def load_sg5_file(path: str) -> List[Measure]:
