@@ -85,8 +85,9 @@ class DriftCorrectionFile:
 
 
 class SG5File:
-    def __init__(self, path: str):
+    def __init__(self, path: str, number: str):
         self.__measures = load_sg5_file(path)
+        self.number = number
 
     @property
     def measures(self) -> List[Measure]:
