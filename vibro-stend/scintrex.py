@@ -12,7 +12,7 @@ FREQUENCY = 6
 @dataclass
 class Measure:
     dt_start: datetime
-    value: float
+    src_value: float
     duration: float
 
     @property
