@@ -50,6 +50,40 @@ def load_sg5_file(path: str) -> List[Measure]:
     return measures
 
 
+@load_file
+def load_drift_corrections(path: str) -> Dict[str, Dict[datetime, float]]:
+    corrections = dict()
+    with open(path) as file_ctx:
+        for i, line in enumerate(file_ctx):
+            t = line.rstrip().split('\t')
+            if i == 0 or len(t) != 4:
+                continue
+            gravimeter = t[0]
+            datetime_val = datetime.strptime(' '.join(t[1:3]),
+                                             '%d/%m/%Y %H:%M:%S')
+            correction_val = float(t[3])
+            if gravimeter not in corrections:
+                corrections[gravimeter] = dict()
+            corrections[gravimeter][datetime_val] = correction_val
+    return corrections
+
+
+class DriftCorrectionFile:
+    def __init__(self, path):
+        self.corrections = load_drift_corrections(path)
+
+    def get_value(self, gravimeter: str,
+                  datetime_val: datetime) -> float:
+        correction_vals = self.corrections.get(gravimeter, None)
+        if not correction_vals:
+            return 0
+
+        value = correction_vals.get(datetime_val, None)
+        if not value:
+            return 0
+        return value
+
+
 class SG5File:
     def __init__(self, path: str):
         self.__measures = load_sg5_file(path)
