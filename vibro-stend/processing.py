@@ -125,8 +125,8 @@ class PairProcessing:
                                              seis_params.energy_freq)
         return params
 
-    def get_cycle_info(self, seis_dt_min: datetime,
-                       seis_dt_max: datetime) -> Union[None, StendMeasure]:
+    def get_stend_measure(self, seis_dt_min: datetime,
+                          seis_dt_max: datetime) -> Union[None, StendMeasure]:
         origin_start = self.seis_data.datetime_start
 
         dt_min_sec = (seis_dt_min - origin_start).total_seconds()
