@@ -111,6 +111,10 @@ class PairProcessing:
     def get_seis_avg_characteristics(self, dt_start: datetime,
                                      dt_stop: datetime) -> Tuple[float, float,
                                                                  float]:
+        if not (self.seis_data.datetime_start <= dt_start and dt_stop <=
+                self.seis_data.datetime_stop):
+            raise ValueError
+
         seis_params = self.config.seismic_parameters
 
         self.seis_data.read_date_time_start = dt_start
