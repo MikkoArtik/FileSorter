@@ -34,6 +34,17 @@ def get_amplitude_energy_params(signal: np.ndarray, frequency: int,
 
 
 @dataclass
+class EnergyRegression:
+    coeffs: List[float]
+
+    def get_value(self, x: float) -> float:
+        correction = 0
+        for i, coeff in enumerate(self.coeffs[1:]):
+            correction += coeff * x ** (i + 1)
+        return correction
+
+
+@dataclass
 class StatInfo:
     datetime_val: datetime
     seismometer: str
