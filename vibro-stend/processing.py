@@ -45,13 +45,8 @@ class EnergyRegression:
 
 
 @dataclass
-class StatInfo:
-    datetime_val: datetime
-    seismometer: str
-    gravimeter: str
-    frequency: float
-    amplitude: float
-    velocity: float
+class SeismicIntervalInfo:
+    stend_measure: StendMeasure
     spectrum_energy: float
     amplitude_energy: float
     delta_amplitude: float
