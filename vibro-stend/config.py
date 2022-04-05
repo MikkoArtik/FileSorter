@@ -28,8 +28,8 @@ class StendMeasure:
 
     @property
     def velocity(self):
-        return round(2 * self.frequency * self.amplitude, 3)
-    
+        return round(4 * self.frequency * self.amplitude, 3)
+
     
 @dataclass
 class SeismicParameters:
