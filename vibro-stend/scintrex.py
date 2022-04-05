@@ -15,6 +15,8 @@ class Measure:
     src_value: float
     duration: float
     drift_correction: float = 0
+    seis_correction: float = 0
+    acceleration: float = 0
 
     @property
     def dt_stop(self):
