@@ -21,8 +21,12 @@ class Measure:
         return self.dt_start + timedelta(seconds=self.duration)
 
     @property
+    def total_correction(self) -> float:
+        return self.drift_correction + self.seis_correction
+
+    @property
     def result_value(self) -> float:
-        return self.src_value + self.drift_correction
+        return round(self.src_value + self.total_correction, 4)
 
 
 def load_file(func):
