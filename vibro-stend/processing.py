@@ -79,7 +79,18 @@ class JoinRecord:
         return '\t'.join(t)
 
 
-class Processing:
+@dataclass
+class VelocityRegression:
+    coeffs: List[float]
+
+    def get_value(self, x: float) -> float:
+        correction = 0
+        for i, coeff in enumerate(self.coeffs):
+            correction += coeff * x ** i
+        return correction
+
+
+class PairProcessing:
     def __init__(self, config_path: str):
         self.config = Config(config_path)
 
