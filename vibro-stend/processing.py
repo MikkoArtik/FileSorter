@@ -50,15 +50,32 @@ class SeismicIntervalInfo:
     spectrum_energy: float
     amplitude_energy: float
     delta_amplitude: float
-    grav_measure: float
+
+
+@dataclass
+class JoinRecord:
+    pair: Pair
+    stend_measure: StendMeasure
+    spectrum_energy: float
+    amplitude_energy: float
+    delta_amplitude: float
+    grav_measure: Measure
 
     @property
     def line(self) -> str:
-        t = [self.datetime_val.strftime('%Y-%m-%d %H:%M:%S'),
-             self.seismometer, self.gravimeter, str(self.frequency),
-             str(self.amplitude), str(self.velocity),
-             str(self.spectrum_energy), str(self.amplitude_energy),
-             str(self.delta_amplitude), str(self.grav_measure)]
+        t = [self.grav_measure.dt_start.strftime('%Y-%m-%d %H:%M:%S'),
+             self.pair.seismic, self.pair.gravimetric]
+        if self.stend_measure:
+            t += [str(self.stend_measure.frequency),
+             str(self.stend_measure.amplitude),
+             str(self.stend_measure.velocity)]
+        else:
+            t += ['-9999'] * 3
+
+        t += [str(self.spectrum_energy), str(self.amplitude_energy),
+              str(self.delta_amplitude), str(self.grav_measure.src_value),
+              str(self.grav_measure.result_value),
+              str(self.grav_measure.acceleration)]
         return '\t'.join(t)
 
 
