@@ -1,6 +1,6 @@
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 
@@ -9,8 +9,12 @@ from seiscore.functions.spectrum import spectrum
 from seiscore.functions.energy import spectrum_energy
 from seiscore.functions.filter import band_pass_filter
 
-from config import Config, Limit, StendMeasure
-from scintrex import SG5File, DriftCorrectionFile
+from config import Config, StreamConfig, Limit, StendMeasure, Pair
+from scintrex import SG5File, DriftCorrectionFile, Measure
+
+
+ENERGY_FITTING_DEGREE = 3
+AMPLITUDE_FITTING_DEGREE = 1
 
 
 def get_amplitude_energy_params(signal: np.ndarray, frequency: int,
