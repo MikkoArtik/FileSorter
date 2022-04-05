@@ -21,8 +21,6 @@ def get_amplitude_energy_params(signal: np.ndarray, frequency: int,
                                 energy_freq_limits: Limit) -> Tuple[float,
                                                                     float,
                                                                     float]:
-    min_amp, max_amp = min(signal), max(signal)
-
     spectrum_data = spectrum(signal, frequency)
     sp_e_val = spectrum_energy(spectrum_data, [energy_freq_limits.low,
                                                energy_freq_limits.high])
@@ -30,7 +28,8 @@ def get_amplitude_energy_params(signal: np.ndarray, frequency: int,
                                      energy_freq_limits.low,
                                      energy_freq_limits.high)
     ampl_e_val = np.sum(filter_signal ** 2)
-    ampl_diff = max_amp - min_amp
+
+    ampl_diff = max(filter_signal) - min(filter_signal)
     return sp_e_val, ampl_e_val, ampl_diff
 
 
